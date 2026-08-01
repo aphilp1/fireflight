@@ -782,6 +782,12 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
 
     <div class="tabs" id="missionTabs" style="border-bottom:2px solid var(--fire)"></div>
 
+    <div id="addMission" style="display:flex;gap:6px;padding:7px 12px;border-bottom:1px solid var(--line);background:var(--panel2)">
+      <input id="addTailInput" type="text" placeholder="Tail # e.g. N880AG" style="flex:1;font-size:11.5px;padding:5px 7px;border:1px solid var(--line);border-radius:4px;text-transform:uppercase">
+      <button id="addTailBtn" style="font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:5px 10px;border:1px solid var(--line);background:#fff;border-radius:4px;cursor:pointer;color:var(--fire)">TRACK</button>
+    </div>
+    <div id="addMissionMsg" style="display:none;padding:6px 12px;font-size:10.5px;color:var(--dim);background:var(--panel2);border-bottom:1px solid var(--line)"></div>
+
     <div id="flightbox">
       <div class="cs" id="cs">NASA520</div>
       <div class="meta" id="acmeta">Gulfstream III · N520NA · C-FIRST thermal-IR imager</div>
@@ -1244,8 +1250,10 @@ function drawProfile(){
 /* ---------------- mission switching ---------------- */
 let pollTimer=null;
 function boundsFor(m){
-  const pts=m.actual.length?m.actual.map(p=>[p[1],p[2]]):m.filed.map(w=>[w.lat,w.lon]);
-  return L.latLngBounds(pts);
+  if(m.actual.length) return L.latLngBounds(m.actual.map(p=>[p[1],p[2]]));
+  if(m.filed.length) return L.latLngBounds(m.filed.map(w=>[w.lat,w.lon]));
+  const [minLon,minLat,maxLon,maxLat] = m.box.split(',').map(Number);
+  return L.latLngBounds([[minLat,minLon],[maxLat,maxLon]]);
 }
 async function renderMission(idx){
   missionIdx=idx; mission=MISSIONS[idx];
@@ -1256,7 +1264,7 @@ async function renderMission(idx){
   gFire.clearLayers(); gPerim.clearLayers(); gMoa.clearLayers();
 
   document.getElementById('cs').textContent = m.flight.callsign;
-  document.getElementById('acmeta').textContent = m.flight.type+' · '+m.flight.reg+' · '+m.flight.payload;
+  document.getElementById('acmeta').textContent = [m.flight.type, m.flight.reg, m.flight.payload].filter(Boolean).join(' · ');
   const missionEl = document.getElementById('mission'), missionToggle = document.getElementById('missionToggle');
   missionEl.textContent = m.flight.pattern || '';
   missionEl.classList.add('clamped');
@@ -1312,7 +1320,7 @@ async function renderMission(idx){
   });
   document.getElementById('tfrList').innerHTML =
     '<div style="color:#5b6b7a;font-size:10.5px;margin-bottom:8px">'+esc(m.tfrNote)+'</div>'+
-    (tfrHtml.join('')||'<div style="color:#5b6b7a">0 active TFRs</div>');
+    tfrHtml.join('');
   document.querySelectorAll('#tfrList .card').forEach(c=>c.onclick=()=>{
     const t=m.tfrs.find(x=>x.id===c.dataset.t); map.fitBounds(t._poly.getBounds(),{padding:[60,60]}); t._poly.openPopup();
   });
@@ -1334,10 +1342,59 @@ async function renderMission(idx){
   pollAircraft(); pollTimer=setInterval(pollAircraft,2000);
 }
 
+/* ---------------- add a flight by tail number ---------------- */
+function renderMissionTabs(){
+  document.getElementById('missionTabs').innerHTML =
+    MISSIONS.map((m,i)=>'<button class="'+(i===missionIdx?'on':'')+'" data-i="'+i+'">'+esc(m.label)+'</button>').join('');
+  document.querySelectorAll('#missionTabs button').forEach(b=>b.onclick=()=>renderMission(+b.dataset.i));
+}
+function boxAround(lat,lon,padLat,padLon){
+  return [lon-padLon, lat-padLat, lon+padLon, lat+padLat].map(n=>n.toFixed(4)).join(',');
+}
+async function addMissionByTail(tailRaw){
+  const tail = tailRaw.trim().toUpperCase();
+  const msgEl = document.getElementById('addMissionMsg');
+  msgEl.style.display = 'block';
+  if(!tail){ msgEl.textContent = 'Enter a tail number.'; return; }
+  msgEl.textContent = 'Looking up '+tail+' via airplanes.live...';
+  let j;
+  try{
+    j = await jget('https://api.airplanes.live/v2/reg/'+encodeURIComponent(tail));
+  }catch(e){
+    msgEl.textContent = tail+': ADS-B lookup failed ('+e.message+').';
+    return;
+  }
+  const ac = (j.ac||[])[0];
+  if(!ac){
+    msgEl.textContent = tail+' is not currently broadcasting a live position -- can only add a flight while it\'s airborne (no historical backfill available client-side; ask Claude to pull its trace/TFRs server-side instead).';
+    return;
+  }
+  const lat = ac.lat, lon = ac.lon;
+  const padLat = 0.8, padLon = 1.2 / Math.max(0.2, Math.cos(lat*Math.PI/180));
+  const flight = {
+    callsign: (ac.flight||tail).trim(), hex: ac.hex||null, reg: ac.r||tail,
+    type: ac.desc || ac.t || 'Unknown type', operator: ac.ownOp || 'Unknown operator',
+    payload: '', dep:'—', arr:'—', offBlockLocal:'—', etaLocal:'—',
+    note:'Added by live tail lookup at '+new Date().toISOString().slice(11,16)+'Z. No filed route or historical track available client-side (FlightAware/globe.airplanes.live block cross-origin fetches) -- track records live from this point forward only.',
+    pattern:'TFRs not auto-fetched -- tfr.faa.gov has no CORS header, same limitation as this app\'s other missions. Ask Claude to pull real TFR/SUA data server-side if you need it baked in.'
+  };
+  const mission = {
+    id:'tail_'+tail, label:tail+(ac.flight?' · '+ac.flight.trim():''),
+    snapshotUtc:new Date().toISOString().slice(0,16)+'Z (live-added, no baked history)',
+    flight, filed:[], actual:[], tfrs:[],
+    box:boxAround(lat,lon,padLat,padLon),
+    tfrNote:'TFRs not fetched for this flight (added live, client-side only -- tfr.faa.gov blocks cross-origin requests). Ask Claude to pull them if needed.'
+  };
+  MISSIONS.push(mission);
+  renderMissionTabs();
+  renderMission(MISSIONS.length-1);
+  msgEl.textContent = 'Tracking '+tail+' live. Recording flight path from now forward.';
+}
+document.getElementById('addTailBtn').onclick = () => addMissionByTail(document.getElementById('addTailInput').value);
+document.getElementById('addTailInput').addEventListener('keydown', e => { if(e.key==='Enter') addMissionByTail(e.target.value); });
+
 /* ---------------- tabs, clock, boot ---------------- */
-document.getElementById('missionTabs').innerHTML =
-  MISSIONS.map((m,i)=>'<button class="'+(i===0?'on':'')+'" data-i="'+i+'">'+esc(m.label)+'</button>').join('');
-document.querySelectorAll('#missionTabs button').forEach(b=>b.onclick=()=>renderMission(+b.dataset.i));
+renderMissionTabs();
 
 document.querySelectorAll('.tabs button[data-p]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button[data-p]').forEach(x=>x.classList.toggle('on',x===b));

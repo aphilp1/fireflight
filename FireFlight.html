@@ -696,17 +696,17 @@ html,body{margin:0;height:100%;background:var(--bg);color:var(--ink);
 #side{width:360px;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;
   box-shadow:-2px 0 10px rgba(16,33,48,.10);z-index:1000}
 
-header{background:#fff;border-bottom:2px solid var(--fire);padding:11px 15px;display:flex;
+header{background:#fff;border-bottom:2px solid var(--fire);padding:7px 15px;display:flex;
   align-items:baseline;justify-content:space-between;gap:9px;flex:0 0 auto}
 header h1{margin:0;font-size:17px;font-weight:800;letter-spacing:1.2px;color:var(--fire)}
 header h1 em{font-style:normal;color:var(--ink)}
 header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numeric:tabular-nums}
 
 .tabs{display:flex;background:var(--panel2);border-bottom:1px solid var(--line);flex:0 0 auto}
-.tabs button{flex:1;background:none;border:0;color:var(--dim);padding:9px 4px;font-size:11px;
+.tabs button{flex:1;background:none;border:0;color:var(--dim);padding:7px 4px;font-size:11px;
   font-weight:800;letter-spacing:.7px;cursor:pointer;border-bottom:2px solid transparent}
 .tabs button.on{color:var(--fire);background:#fff;border-bottom-color:var(--fire)}
-.pane{display:none;overflow-y:auto;flex:1;padding:10px 12px;background:var(--panel2)}
+.pane{display:none;overflow-y:auto;flex:1;min-height:140px;padding:10px 12px;background:var(--panel2)}
 .pane.on{display:block}
 
 .card{background:#fff;border:1px solid var(--line);border-left-width:4px;border-radius:5px;
@@ -717,21 +717,21 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
 .card .row{display:flex;gap:14px;font-size:11.5px;color:#42525f}
 .card b{font-weight:800;color:var(--ink)}
 
-#flightbox{padding:11px 13px;border-bottom:1px solid var(--line);flex:0 0 auto;background:#fff}
-#flightbox .cs{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:.6px}
-#flightbox .meta{color:var(--dim);font-size:11px;margin:1px 0 8px}
+#flightbox{padding:8px 12px;border-bottom:1px solid var(--line);flex:0 0 auto;background:#fff}
+#flightbox .cs{font-size:14px;font-weight:800;color:var(--ink);letter-spacing:.6px}
+#flightbox .meta{color:var(--dim);font-size:10.5px;margin:1px 0 4px}
 #mission.clamped{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-#missionToggle{display:inline-block;margin:-4px 0 8px;font-size:10.5px;font-weight:800;letter-spacing:.3px;
+#missionToggle{display:inline-block;margin:-3px 0 5px;font-size:10px;font-weight:800;letter-spacing:.3px;
   color:var(--dim);cursor:pointer;text-decoration:underline;text-underline-offset:2px}
-.tel{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
-.tel div{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
-.tel .k{font-size:9px;color:var(--dim);letter-spacing:.7px;font-weight:800}
-.tel .v{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
-#live{font-size:10.5px;color:var(--dim)}
+.tel{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:5px}
+.tel div{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:3px 7px}
+.tel .k{font-size:8.5px;color:var(--dim);letter-spacing:.7px;font-weight:800}
+.tel .v{font-size:13px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--ink)}
+#live{font-size:10px;color:var(--dim)}
 #live .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#b6c0c9;margin-right:5px}
 #live.on .dot{background:var(--air);box-shadow:0 0 6px rgba(0,213,240,.85);animation:p 2s infinite}
 @keyframes p{50%{opacity:.35}}
-#prof{width:100%;height:74px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+#prof{width:100%;height:42px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:4px}
 
 .legend{position:absolute;bottom:16px;left:16px;z-index:900;background:rgba(255,255,255,.94);
   border:1px solid var(--line);border-radius:5px;padding:9px 13px;font-size:11px;line-height:1.8;
@@ -739,7 +739,7 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
 .legend b{display:block;font-size:9.5px;letter-spacing:.8px;color:var(--dim);margin-bottom:4px;text-transform:uppercase}
 .sw{display:inline-block;width:20px;height:0;border-top:3px solid;vertical-align:middle;margin-right:8px;filter:drop-shadow(0 0 1px rgba(0,0,0,.75))}
 .bx{display:inline-block;width:13px;height:11px;border:2px solid;vertical-align:middle;margin-right:8px}
-.foot{color:var(--dim);font-size:10px;padding:8px 13px;border-top:1px solid var(--line);flex:0 0 auto;background:#fff}
+.foot{color:var(--dim);font-size:9.5px;padding:5px 13px;border-top:1px solid var(--line);flex:0 0 auto;background:#fff}
 .lbl{font:700 10.5px/1.15 "Segoe UI",sans-serif;color:#fff;
   text-shadow:0 0 3px rgba(0,0,0,.95),0 0 6px rgba(0,0,0,.85),0 1px 2px #000;white-space:nowrap}
 .leaflet-popup-content-wrapper{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:5px}
@@ -793,8 +793,8 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
         <div><div class="k">TRK</div><div class="v" id="tTrk">—</div></div>
       </div>
       <canvas id="prof"></canvas>
-      <div id="live" style="margin-top:6px"><span class="dot"></span><span id="liveTxt">connecting…</span></div>
-      <div style="display:flex;gap:6px;margin-top:8px"><button id="zoomFlight" style="flex:1;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:6px;border:1px solid var(--line);background:var(--panel2);border-radius:4px;cursor:pointer;color:var(--ink)">ZOOM TO TRACK</button><button id="zoomAc" style="flex:1;font-size:10.5px;font-weight:800;letter-spacing:.4px;padding:6px;border:1px solid var(--line);background:var(--panel2);border-radius:4px;cursor:pointer;color:var(--ink)">FOLLOW AIRCRAFT</button></div>
+      <div id="live" style="margin-top:4px"><span class="dot"></span><span id="liveTxt">connecting…</span></div>
+      <div style="display:flex;gap:6px;margin-top:6px"><button id="zoomFlight" style="flex:1;font-size:10px;font-weight:800;letter-spacing:.4px;padding:5px;border:1px solid var(--line);background:var(--panel2);border-radius:4px;cursor:pointer;color:var(--ink)">ZOOM TO TRACK</button><button id="zoomAc" style="flex:1;font-size:10px;font-weight:800;letter-spacing:.4px;padding:5px;border:1px solid var(--line);background:var(--panel2);border-radius:4px;cursor:pointer;color:var(--ink)">FOLLOW AIRCRAFT</button></div>
     </div>
 
     <div class="tabs">

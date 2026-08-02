@@ -780,7 +780,15 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
       <span id="clock">—</span><span style="color:#d7301f;font-weight:800">v0.9</span>
     </header>
 
-    <div class="tabs" id="missionTabs" style="border-bottom:2px solid var(--fire)"></div>
+    <div style="position:relative;display:flex;align-items:stretch;border-bottom:2px solid var(--fire);flex:0 0 auto">
+      <button id="pinnedTab" style="flex:1;min-width:0;background:#fff;border:0;color:var(--fire);padding:9px 10px;
+        font-size:11px;font-weight:800;letter-spacing:.5px;cursor:default;text-align:left;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></button>
+      <button id="otherFlightsToggle" style="flex:0 0 auto;background:var(--panel2);border:0;border-left:1px solid var(--line);
+        color:var(--dim);padding:9px 12px;font-size:10px;font-weight:800;letter-spacing:.3px;cursor:pointer;white-space:nowrap">OTHER FLIGHTS ▾</button>
+      <div id="otherFlightsDropdown" style="display:none;position:absolute;top:100%;left:0;right:0;z-index:1200;
+        background:#fff;border:1px solid var(--line);box-shadow:0 4px 14px rgba(16,33,48,.25);max-height:240px;overflow-y:auto"></div>
+    </div>
 
     <div id="addMission" style="display:flex;gap:6px;padding:7px 12px;border-bottom:1px solid var(--line);background:var(--panel2)">
       <input id="addTailInput" type="text" placeholder="Tail # e.g. N880AG" style="flex:1;font-size:11.5px;padding:5px 7px;border:1px solid var(--line);border-radius:4px;text-transform:uppercase">
@@ -789,7 +797,11 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
     <div id="addMissionMsg" style="display:none;padding:6px 12px;font-size:10.5px;color:var(--dim);background:var(--panel2);border-bottom:1px solid var(--line)"></div>
 
     <div id="flightbox">
-      <div class="cs" id="cs">NASA520</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px">
+        <div class="cs" id="cs">NASA520</div>
+        <button id="archiveBtn" style="flex:0 0 auto;font-size:9px;font-weight:800;letter-spacing:.4px;color:var(--dim);
+          background:none;border:1px solid var(--line);border-radius:3px;padding:3px 7px;cursor:pointer">ARCHIVE</button>
+      </div>
       <div class="meta" id="acmeta">Gulfstream III · N520NA · C-FIRST thermal-IR imager</div>
       <div class="meta clamped" id="mission" style="color:var(--fire);font-weight:600"></div>
       <span id="missionToggle" style="display:none">show more</span>
@@ -1070,11 +1082,11 @@ const FLIGHT_MT = {
 };
 
 const MISSIONS = [
-  { id:"silvertip", label:"NASA806 · SILVERTIP", snapshotUtc:"2026-08-02T15:19Z",
+  { id:"silvertip", label:"NASA806 · SILVERTIP", snapshotUtc:"2026-08-02T15:19Z", archived:false,
     flight:FLIGHT_MT, filed:FILED_MT, actual:ACTUAL_MT, tfrs:TFRS_MT,
     box:"-121.3333,46.5985,-110.8703,49.3167",
     tfrNote:"FAA TFR snapshot 2026-08-02T15:19Z (refreshed for Sunday -- 2 TFRs renewed under new NOTAM numbers, 2 new ones added near Spokane since the Aug 1 bake) — tfr.faa.gov sends no CORS header, so these are baked in (not live); box covers the fire + the ER-2's filed route out toward north-central WA. Ceiling altitudes not confirmed (no reachable per-TFR endpoint) -- shown as '—'. MOA/restricted (Okanogan A/B/C, Roosevelt A/B, Fairchild AFB R-6714 A-H) and fires/perimeters are live, not baked." },
-  { id:"bald_mountain", label:"NASA520 · BALD MTN (ARCHIVED 7/31)", snapshotUtc:SNAPSHOT_UTC,
+  { id:"bald_mountain", label:"NASA520 · BALD MTN (7/31)", snapshotUtc:SNAPSHOT_UTC, archived:true,
     flight:FLIGHT, filed:FILED, actual:ACTUAL, tfrs:TFRS,
     box:"-121.2,41.6,-114.6,46.4", tfrNote:"FAA TFR snapshot "+SNAPSHOT_UTC+" — tfr.faa.gov sends no CORS header, so these are baked in, not live. Mission complete/archived; aircraft on the ground, live poll will just show no contact." }
 ];
@@ -1263,13 +1275,18 @@ function boundsFor(m){
 async function renderMission(idx){
   missionIdx=idx; mission=MISSIONS[idx];
   const m=mission;
-  document.querySelectorAll('#missionTabs button').forEach((b,i)=>b.classList.toggle('on',i===idx));
+  renderMissionTabs();
 
   gRoute.clearLayers(); gTfr.clearLayers(); gLive.clearLayers();
   gFire.clearLayers(); gPerim.clearLayers(); gMoa.clearLayers();
 
   document.getElementById('cs').textContent = m.flight.callsign;
   document.getElementById('acmeta').textContent = [m.flight.type, m.flight.reg, m.flight.payload].filter(Boolean).join(' · ');
+  const archiveBtn = document.getElementById('archiveBtn');
+  archiveBtn.textContent = m.archived ? 'ARCHIVED' : 'ARCHIVE';
+  archiveBtn.disabled = !!m.archived;
+  archiveBtn.style.opacity = m.archived ? '.5' : '1';
+  archiveBtn.style.cursor = m.archived ? 'default' : 'pointer';
   const missionEl = document.getElementById('mission'), missionToggle = document.getElementById('missionToggle');
   missionEl.textContent = m.flight.pattern || '';
   missionEl.classList.add('clamped');
@@ -1349,9 +1366,20 @@ async function renderMission(idx){
 
 /* ---------------- add a flight by tail number ---------------- */
 function renderMissionTabs(){
-  document.getElementById('missionTabs').innerHTML =
-    MISSIONS.map((m,i)=>'<button class="'+(i===missionIdx?'on':'')+'" data-i="'+i+'">'+esc(m.label)+'</button>').join('');
-  document.querySelectorAll('#missionTabs button').forEach(b=>b.onclick=()=>renderMission(+b.dataset.i));
+  const cur = MISSIONS[missionIdx];
+  document.getElementById('pinnedTab').textContent = cur.label;
+  const dd = document.getElementById('otherFlightsDropdown');
+  const others = MISSIONS.map((m,i)=>({m,i})).filter(o=>o.i!==missionIdx);
+  dd.innerHTML = others.length ? others.map(o=>
+    '<div class="ofRow" data-i="'+o.i+'" style="padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer">'+
+      '<div style="font-weight:800;font-size:11.5px;color:var(--ink)">'+esc(o.m.label)+'</div>'+
+      '<div style="font-size:10px;color:var(--dim);margin-top:2px">'+(o.m.archived?'Archived':'Active')+'</div>'+
+    '</div>'
+  ).join('') : '<div style="padding:12px;color:var(--dim);font-size:11px">No other flights yet -- track one above.</div>';
+  document.querySelectorAll('#otherFlightsDropdown .ofRow').forEach(row=>row.onclick=()=>{
+    renderMission(+row.dataset.i);
+    dd.style.display='none';
+  });
 }
 function boxAround(lat,lon,padLat,padLon){
   return [lon-padLon, lat-padLat, lon+padLon, lat+padLat].map(n=>n.toFixed(4)).join(',');
@@ -1383,14 +1411,14 @@ async function addMissionByTail(tailRaw){
     note:'Added by live tail lookup at '+new Date().toISOString().slice(11,16)+'Z. No filed route or historical track available client-side (FlightAware/globe.airplanes.live block cross-origin fetches) -- track records live from this point forward only.',
     pattern:'TFRs not auto-fetched -- tfr.faa.gov has no CORS header, same limitation as this app\'s other missions. Ask Claude to pull real TFR/SUA data server-side if you need it baked in.'
   };
-  const mission = {
-    id:'tail_'+tail, label:tail+(ac.flight?' · '+ac.flight.trim():''),
+  const newMission = {
+    id:'tail_'+tail, label:tail+(ac.flight?' · '+ac.flight.trim():''), archived:false,
     snapshotUtc:new Date().toISOString().slice(0,16)+'Z (live-added, no baked history)',
     flight, filed:[], actual:[], tfrs:[],
     box:boxAround(lat,lon,padLat,padLon),
     tfrNote:'TFRs not fetched for this flight (added live, client-side only -- tfr.faa.gov blocks cross-origin requests). Ask Claude to pull them if needed.'
   };
-  MISSIONS.push(mission);
+  MISSIONS.push(newMission);
   renderMissionTabs();
   renderMission(MISSIONS.length-1);
   msgEl.textContent = 'Tracking '+tail+' live. Recording flight path from now forward.';
@@ -1400,6 +1428,23 @@ document.getElementById('addTailInput').addEventListener('keydown', e => { if(e.
 
 /* ---------------- tabs, clock, boot ---------------- */
 renderMissionTabs();
+document.getElementById('otherFlightsToggle').onclick = (e)=>{
+  e.stopPropagation();
+  const dd = document.getElementById('otherFlightsDropdown');
+  dd.style.display = dd.style.display==='block' ? 'none' : 'block';
+};
+document.addEventListener('click', (e)=>{
+  const dd = document.getElementById('otherFlightsDropdown');
+  if(dd.style.display==='block' && !dd.contains(e.target) && e.target.id!=='otherFlightsToggle'){
+    dd.style.display='none';
+  }
+});
+document.getElementById('archiveBtn').onclick = ()=>{
+  if(mission.archived) return;
+  mission.archived = true;
+  renderMission(missionIdx);
+  renderMissionTabs();
+};
 
 document.querySelectorAll('.tabs button[data-p]').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('.tabs button[data-p]').forEach(x=>x.classList.toggle('on',x===b));

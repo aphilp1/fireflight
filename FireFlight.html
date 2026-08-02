@@ -1258,7 +1258,7 @@ async function loadFires(BOX){
 async function loadPerimeters(BOX){
   try{
     const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query'+
-      '?where=poly_GISAcres%3E5000&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
+      '?where=poly_GISAcres%3E100&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
       '&spatialRel=esriSpatialRelIntersects&outFields=poly_IncidentName,poly_GISAcres&returnGeometry=true'+
       '&maxAllowableOffset=0.004&outSR=4326&f=geojson';
     const j=await jget(u);

@@ -1089,7 +1089,7 @@ const MISSIONS = [
   { id:"bald_mountain", label:"NASA520 · BALD MTN (7/31)", snapshotUtc:SNAPSHOT_UTC, archived:true,
     flight:FLIGHT, filed:FILED, actual:ACTUAL, tfrs:TFRS,
     box:"-121.2,41.6,-114.6,46.4", tfrNote:"FAA TFR snapshot "+SNAPSHOT_UTC+" — tfr.faa.gov sends no CORS header, so these are baked in, not live. Mission complete/archived; aircraft on the ground, live poll will just show no contact." },
-  { id:"nasa520_0802", label:"N520NA · NASA520 (8/2)", snapshotUtc:"2026-08-02T18:45Z", archived:false,
+  { id:"nasa520_0802", label:"N520NA · NASA520 (8/2)", snapshotUtc:"2026-08-02T18:45Z", archived:true,
     flight:{
       callsign:"NASA520", hex:"a68a1b", reg:"N520NA", type:"Gulfstream III (GLF3)",
       operator:"NASA Langley Research Center", payload:"",
@@ -1273,7 +1273,7 @@ const NM=1852, esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':
 const fmt=n=>n==null?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
 /* ---------------- state ---------------- */
-let missionIdx=MISSIONS.findIndex(m=>m.id==="nasa520_0802"), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null, liveProfile=[];
+let missionIdx=(MISSIONS.findIndex(m=>!m.archived)+1 ? MISSIONS.findIndex(m=>!m.archived) : MISSIONS.length-1), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null, liveProfile=[];
 function circlePts(lat,lon,nm){
   const out=[], R=nm*NM/6371000;
   for(let i=0;i<=48;i++){const t=i/48*2*Math.PI;
@@ -1612,8 +1612,8 @@ document.addEventListener('click', (e)=>{
 document.getElementById('archiveBtn').onclick = ()=>{
   if(mission.archived) return;
   mission.archived = true;
-  renderMission(missionIdx);
-  renderMissionTabs();
+  const next = MISSIONS.findIndex(m=>!m.archived);
+  renderMission(next!==-1 ? next : missionIdx);
 };
 
 document.querySelectorAll('.tabs button[data-p]').forEach(b=>b.onclick=()=>{

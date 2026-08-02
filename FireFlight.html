@@ -731,7 +731,7 @@ header span{font-size:10.5px;font-weight:700;color:var(--dim);font-variant-numer
 #live .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#b6c0c9;margin-right:5px}
 #live.on .dot{background:var(--air);box-shadow:0 0 6px rgba(0,213,240,.85);animation:p 2s infinite}
 @keyframes p{50%{opacity:.35}}
-#prof{width:100%;height:42px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:4px}
+#prof{width:100%;height:62px;display:block;background:var(--panel2);border:1px solid var(--line);border-radius:4px}
 
 .legend{position:absolute;bottom:16px;left:16px;z-index:900;background:rgba(255,255,255,.94);
   border:1px solid var(--line);border-radius:5px;padding:9px 13px;font-size:11px;line-height:1.8;
@@ -1225,7 +1225,7 @@ async function pollAircraft(){
 function drawProfile(){
   const c=document.getElementById('prof'), d=c.getBoundingClientRect();
   c.width=d.width*2; c.height=d.height*2; const x=c.getContext('2d'); x.scale(2,2);
-  const W=d.width, H=d.height, maxA=33000;
+  const W=d.width, H=d.height;
   x.clearRect(0,0,W,H);
   const actual=mission.actual;
   if(!actual.length){
@@ -1234,10 +1234,13 @@ function drawProfile(){
     return;
   }
   const t0=actual[0][0], t1=actual[actual.length-1][0];
+  const peakAlt=Math.max(...actual.map(p=>p[3]));
+  const maxA=Math.max(33000, Math.ceil(peakAlt/5000)*5000+2000);
+  const gridStep=maxA>40000?20000:10000;
   x.strokeStyle='#d8dee4'; x.lineWidth=1;
-  [10000,20000,30000].forEach(a=>{const y=H-(a/maxA)*(H-10)-4;
+  for(let a=gridStep; a<maxA; a+=gridStep){ const y=H-(a/maxA)*(H-10)-4;
     x.beginPath();x.moveTo(0,y);x.lineTo(W,y);x.stroke();
-    x.fillStyle='#5b6b7a';x.font='8px sans-serif';x.fillText((a/1000)+'k',2,y-2);});
+    x.fillStyle='#5b6b7a';x.font='8px sans-serif';x.fillText((a/1000)+'k',2,y-2);}
   x.beginPath();
   actual.forEach((p,i)=>{const px=(p[0]-t0)/(t1-t0||1)*W, py=H-(p[3]/maxA)*(H-10)-4;
     i?x.lineTo(px,py):x.moveTo(px,py);});

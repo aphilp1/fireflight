@@ -1095,7 +1095,7 @@ const MISSIONS = [
       operator:"NASA Langley Research Center", payload:"",
       dep:"KBOI", arr:"KBOI", offBlockLocal:"11:52 AM MDT", etaLocal:"04:52 PM MDT (filed)",
       note:"Round trip out of Boise (Gowen Field), returning to Boise. Filed route and both the filed-route waypoints and the actual recorded track below are pulled directly from FlightAware's own data (trackpollBootstrap JSON embedded in the live flight page, id NASA520-1785681911-sw-2922p) -- not reconstructed or approximated. Filed speed 375 kts, filed altitude 28,000 ft, filed duration 5:07:00 (18420s, matches FlightAware's own ete field exactly). Filed route text: VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W.",
-      pattern:"Real recorded track below is FlightAware's own track data for this flight (not airplanes.live/adsb.lol), auto-refreshed periodically by a scheduled re-pull -- 326 baked points so far (downsampled 1-in-2 from FlightAware's raw feed), 18:12Z-20:30Z as of the last refresh, still in progress (status: airborne). Visible in the real data: climbed out of Boise, direct track northeast across Idaho into Montana, flew many repeated north-south survey passes over the Missoula-to-Kalispell/Flathead corridor (Silvertip fire area), and as of the latest refresh has left that corridor heading steadily southwest (47.98N down to 46.98N) -- consistent with starting the filed route's return leg toward Boise. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
+      pattern:"Real recorded track below is FlightAware's own track data for this flight (not airplanes.live/adsb.lol), auto-refreshed periodically by a scheduled re-pull -- 348 baked points so far (downsampled 1-in-2 from FlightAware's raw feed), 18:12Z-20:45Z as of the last refresh, still in progress (status: airborne). Note: as of this refresh FlightAware's own plotted route-line waypoints changed (42->45 points, planned distance 694->810nm) -- the underlying filed route TEXT is unchanged (still VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W), so this looks like FlightAware recalculating its simplified route line against actual progress rather than a genuine FAA amendment, but flagging honestly since Alex reported seeing an official change on his end -- unconfirmed which it is. Visible in the real recorded track: climbed out of Boise, flew many repeated north-south survey passes over the Missoula-to-Kalispell/Flathead corridor (Silvertip fire area), then left that corridor and has been heading steadily southwest since ~20:16Z (down to 45.93N/-115.29W as of the last point), consistent with the filed route's return leg toward Boise. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
     },
     filed:[
       {lat:43.56,lon:-116.22,n:"wp0"},{lat:43.58,lon:-116.26,n:"wp1"},{lat:43.62,lon:-116.33,n:"wp2"},{lat:43.66,lon:-116.39,n:"wp3"},
@@ -1103,12 +1103,13 @@ const MISSIONS = [
       {lat:44.13,lon:-116.12,n:"wp8"},{lat:44.17,lon:-116.1,n:"wp9"},{lat:44.21,lon:-116.08,n:"wp10"},{lat:44.32,lon:-116.02,n:"wp11"},
       {lat:44.47,lon:-115.95,n:"wp12"},{lat:44.64,lon:-115.86,n:"wp13"},{lat:45.34,lon:-115.51,n:"wp14"},{lat:45.45,lon:-115.45,n:"wp15"},
       {lat:45.9,lon:-115.21,n:"wp16"},{lat:46.17,lon:-115.08,n:"wp17"},{lat:46.23,lon:-115.06,n:"wp18"},{lat:46.25,lon:-115.0,n:"wp19"},
-      {lat:46.41,lon:-114.83,n:"wp20"},{lat:47.88,lon:-113.25,n:"FCA R-100/42 hold (D1+30)"},{lat:46.4,lon:-114.51,n:"wp22"},{lat:46.04,lon:-114.8,n:"wp23"},
-      {lat:46.05,lon:-113.7,n:"4603N/11342W"},{lat:45.65,lon:-113.2,n:"4539N/11312W"},{lat:44.48,lon:-114.03,n:"wp26"},{lat:44.41,lon:-114.08,n:"wp27"},
-      {lat:44.33,lon:-114.13,n:"4420N/11408W"},{lat:44.29,lon:-114.27,n:"wp29"},{lat:44.21,lon:-114.49,n:"wp30"},{lat:44.1,lon:-114.79,n:"wp31"},
-      {lat:44.02,lon:-115.01,n:"wp32"},{lat:44.0,lon:-115.07,n:"wp33"},{lat:43.89,lon:-115.35,n:"wp34"},{lat:43.89,lon:-115.36,n:"wp35"},
-      {lat:43.87,lon:-115.41,n:"wp36"},{lat:43.81,lon:-115.56,n:"wp37"},{lat:43.71,lon:-115.83,n:"wp38"},{lat:43.64,lon:-116.03,n:"wp39"},
-      {lat:43.6,lon:-116.14,n:"wp40"},{lat:43.56,lon:-116.22,n:"Return to KBOI"}
+      {lat:46.41,lon:-114.83,n:"wp20"},{lat:46.08,lon:-115.0,n:"wp21"},{lat:45.34,lon:-115.37,n:"wp22"},{lat:45.06,lon:-115.51,n:"wp23"},
+      {lat:44.9,lon:-115.59,n:"wp24"},{lat:44.67,lon:-115.7,n:"wp25"},{lat:44.5,lon:-115.78,n:"wp26"},{lat:44.45,lon:-115.8,n:"wp27"},
+      {lat:47.66,lon:-113.28,n:"FCA R-100/42 hold (D1+30)"},{lat:47.33,lon:-113.72,n:"wp29"},{lat:46.4,lon:-114.34,n:"MSO R-210/60 hold (D1+30)"},{lat:45.35,lon:-115.0,n:"wp31"},
+      {lat:45.33,lon:-115.01,n:"wp32"},{lat:44.99,lon:-115.25,n:"wp33"},{lat:44.83,lon:-115.37,n:"wp34"},{lat:44.61,lon:-115.51,n:"wp35"},
+      {lat:44.45,lon:-115.62,n:"wp36"},{lat:44.41,lon:-115.65,n:"wp37"},{lat:44.2,lon:-115.8,n:"wp38"},{lat:44.15,lon:-115.83,n:"wp39"},
+      {lat:44.05,lon:-115.9,n:"wp40"},{lat:43.85,lon:-116.03,n:"wp41"},{lat:43.7,lon:-116.13,n:"wp42"},{lat:43.63,lon:-116.18,n:"wp43"},
+      {lat:43.56,lon:-116.22,n:"Return to KBOI"}
     ],
     actual:[
       [1785693161,43.5695,-116.2408,3000],[1785693194,43.5844,-116.2834,4000],[1785693231,43.6011,-116.3348,5300],[1785693259,43.6167,-116.3767,6200],[1785693275,43.6283,-116.3939,6700],[1785693287,43.6422,-116.401,7100],
@@ -1165,7 +1166,11 @@ const MISSIONS = [
       [1785701673,48.0574,-113.1439,28000],[1785701691,48.0322,-113.1436,28000],[1785701733,47.9751,-113.1577,28000],
       [1785701763,47.9323,-113.1709,28000],[1785701827,47.8431,-113.1994,28000],[1785701887,47.7583,-113.2264,28000],[1785701918,47.7132,-113.2427,28000],[1785701936,47.6886,-113.2557,28000],[1785701950,47.6717,-113.2682,28000],
       [1785701970,47.6493,-113.2929,28000],[1785702036,47.5822,-113.3813,28000],[1785702096,47.5202,-113.4663,28000],[1785702157,47.4567,-113.5534,28000],[1785702217,47.396,-113.6365,28000],[1785702277,47.3336,-113.7217,28000],
-      [1785702337,47.271,-113.8067,28000],[1785702397,47.207,-113.8934,28000],[1785702457,47.1429,-113.9799,28000],[1785702517,47.0791,-114.0657,28000],[1785702577,47.014,-114.1528,28000],[1785702608,46.9817,-114.1961,28000]
+      [1785702337,47.271,-113.8067,28000],[1785702397,47.207,-113.8934,28000],[1785702457,47.1429,-113.9799,28000],[1785702517,47.0791,-114.0657,28000],[1785702577,47.014,-114.1528,28000],[1785702608,46.9817,-114.1961,28000],
+      [1785702638,46.9508,-114.2373,28000],[1785702698,46.8854,-114.3243,28000],[1785702758,46.8208,-114.4081,28000],[1785702818,46.7565,-114.4919,28000],[1785702878,46.6915,-114.577,28000],[1785702938,46.6267,-114.661,28000],
+      [1785702998,46.5607,-114.746,28000],[1785703059,46.4943,-114.8314,28000],[1785703119,46.4295,-114.9151,28000],[1785703166,46.378,-114.9779,28000],[1785703196,46.3398,-115.0108,28000],[1785703230,46.2923,-115.0379,28000],
+      [1785703281,46.2173,-115.0707,28000],[1785703341,46.129,-115.1062,28000],[1785703389,46.0592,-115.1345,28000],[1785703411,46.0277,-115.1493,28000],[1785703430,46.0098,-115.1737,28000],[1785703459,45.9913,-115.2213,28000],
+      [1785703479,45.9795,-115.2571,28000],[1785703492,45.9708,-115.2801,28000],[1785703504,45.9588,-115.2939,28000],[1785703523,45.9331,-115.2933,28000]
     ],
     tfrs:[
   {id:"6/0576", name:"29NM NW KALISPELL, MT", up:null, eff:"2026-07-31", exp:"2026-08-14",

@@ -1274,7 +1274,7 @@ const NM=1852, esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':
 const fmt=n=>n==null?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
 /* ---------------- state ---------------- */
-let missionIdx=MISSIONS.findIndex(m=>m.id==="nasa520_0802"), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null;
+let missionIdx=MISSIONS.findIndex(m=>m.id==="nasa520_0802"), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null, liveProfile=[];
 function circlePts(lat,lon,nm){
   const out=[], R=nm*NM/6371000;
   for(let i=0;i<=48;i++){const t=i/48*2*Math.PI;
@@ -1391,6 +1391,8 @@ async function pollAircraft(){
       liveTrail.push([la,lo]);
       if(liveLine) liveLine.setLatLngs(liveTrail);
     }
+    if(alt) liveProfile.push([Math.floor(Date.now()/1000), alt]);
+    drawProfile();
     el.classList.add('on');
     tx.textContent='live · '+new Date().toLocaleTimeString()+' · '+esc(ac.r||'')+' via '+src;
   }catch(e){ el.classList.remove('on'); tx.textContent='ADS-B feed unreachable ('+e.message+')'; }
@@ -1402,7 +1404,7 @@ function drawProfile(){
   c.width=d.width*2; c.height=d.height*2; const x=c.getContext('2d'); x.scale(2,2);
   const W=d.width, H=d.height;
   x.clearRect(0,0,W,H);
-  const actual=mission.actual;
+  const actual=mission.actual.concat(liveProfile.map(p=>[p[0],0,0,p[1]]));
   if(!actual.length){
     x.fillStyle='#5b6b7a'; x.font='10px sans-serif'; x.textAlign='left';
     x.fillText('no recorded track — live only (in progress)',6,H/2+3);
@@ -1487,6 +1489,7 @@ async function renderMission(idx){
   } else {
     liveTrail=[];
   }
+  liveProfile=[];
   liveLine=L.polyline(liveTrail,{color:C.air,weight:2.2,opacity:1,
     lineJoin:'round',lineCap:'round'}).addTo(gLive);
   lastAcPos=null;

@@ -1082,7 +1082,7 @@ const FLIGHT_MT = {
 };
 
 const MISSIONS = [
-  { id:"silvertip", label:"NASA806 · SILVERTIP", snapshotUtc:"2026-08-02T15:19Z", archived:false,
+  { id:"silvertip", label:"NASA806 · SILVERTIP", snapshotUtc:"2026-08-02T15:19Z", archived:true,
     flight:FLIGHT_MT, filed:FILED_MT, actual:ACTUAL_MT, tfrs:TFRS_MT,
     box:"-121.3333,46.5985,-110.8703,49.3167",
     tfrNote:"FAA TFR snapshot 2026-08-02T15:19Z (refreshed for Sunday -- 2 TFRs renewed under new NOTAM numbers, 2 new ones added near Spokane since the Aug 1 bake) — tfr.faa.gov sends no CORS header, so these are baked in (not live); box covers the fire + the ER-2's filed route out toward north-central WA. Ceiling altitudes not confirmed (no reachable per-TFR endpoint) -- shown as '—'. MOA/restricted (Okanogan A/B/C, Roosevelt A/B, Fairchild AFB R-6714 A-H) and fires/perimeters are live, not baked." },
@@ -1192,7 +1192,7 @@ const NM=1852, esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':
 const fmt=n=>n==null?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
 /* ---------------- state ---------------- */
-let missionIdx=0, mission=MISSIONS[0], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null;
+let missionIdx=MISSIONS.findIndex(m=>m.id==="nasa520_0802"), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null;
 function circlePts(lat,lon,nm){
   const out=[], R=nm*NM/6371000;
   for(let i=0;i<=48;i++){const t=i/48*2*Math.PI;
@@ -1539,7 +1539,7 @@ document.querySelectorAll('.tabs button[data-p]').forEach(b=>b.onclick=()=>{
 setInterval(()=>document.getElementById('clock').textContent=
   new Date().toUTCString().slice(17,22)+'Z',1000);
 
-renderMission(0);
+renderMission(missionIdx);
 document.getElementById('zoomFlight').onclick=()=>{
   map.fitBounds(boundsFor(mission),{padding:[50,50]});
   if(!map.hasLayer(gRoute)) gRoute.addTo(map);

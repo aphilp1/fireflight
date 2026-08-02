@@ -1094,22 +1094,18 @@ const MISSIONS = [
       callsign:"NASA520", hex:"a68a1b", reg:"N520NA", type:"Gulfstream III (GLF3)",
       operator:"NASA Langley Research Center", payload:"",
       dep:"KBOI", arr:"KBOI", offBlockLocal:"11:52 AM MDT", etaLocal:"04:52 PM MDT (filed)",
-      note:"Round trip out of Boise (Gowen Field), returning to Boise. Filed route and both the filed-route waypoints and the actual recorded track below are pulled directly from FlightAware's own data (trackpollBootstrap JSON embedded in the live flight page, id NASA520-1785681911-sw-2922p) -- not reconstructed or approximated. Filed speed 375 kts, filed altitude 28,000 ft, filed duration 5:07:00 (18420s, matches FlightAware's own ete field exactly). Filed route text: VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W.",
+      note:"Round trip out of Boise (Gowen Field), returning to Boise. Filed speed 375 kts, filed altitude 28,000 ft, filed duration 5:07:00 (18420s), all confirmed directly from Alex's own FlightAware app. Filed route text: VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W. The dashed line below plots this route directly, fix by fix -- not FlightAware's own derived map line (which is a separate, algorithmically-simplified field that changed shape over the flight and doesn't correspond 1:1 to this text). VALYY (the first fix, in Idaho) is not plotted -- no reliable public coordinate source found for it after checking FAA, GlobalAir, AirNav, and FlightPlanDatabase (all blocked or empty); not guessed. The two D1+30 holds are plotted using real FCA/MSO VOR coordinates with a 13.5-degree magnetic-to-true correction applied to the published radials, and both land almost exactly on the real ADS-B loop centers recorded during the flight -- cross-validated against actual data, not blind computation.",
       pattern:"Real recorded track below is FlightAware's own track data for this flight (not airplanes.live/adsb.lol), auto-refreshed periodically by a scheduled re-pull, permanently baked into this file each cycle (not dependent on any browser tab staying open) -- 555 baked points, 18:12Z-22:25Z. **LANDED at KBOI (Boise/Gowen Field), confirmed by FlightAware (flightStatus: arrived, actual landing time 22:26Z, ~30 min ahead of the earlier estimate).** Full mission: departed KBOI ~17:52Z, surveyed the Silvertip/Kalispell-Flathead corridor, then central Idaho (Salmon-Challis NF), then the Bitterroot Valley (Butterfly and Black Bear fires), then the Doublesprings Fire area, then returned and landed at KBOI. Left active per standing instruction -- archiving is Alex's call, not automatic. Note: FlightAware's own plotted route-line waypoints changed as of the 20:45Z refresh (42->45 points, planned distance 694->810nm) -- the underlying filed route TEXT is unchanged (still VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W); still unconfirmed whether that's a genuine FAA amendment or FlightAware's own recalculation. Visible in the real recorded track: climbed out of Boise, flew many repeated north-south survey passes over the Missoula-to-Kalispell/Flathead corridor (Silvertip fire area), circled ~20:16Z-21:26Z over central Idaho (46.0-46.36N/-115.0 to -115.28W, Salmon-Challis NF), then flew directly east across the Bitterroot Range starting ~21:26Z, now over the Bitterroot Valley near 46.14N/-114.02W (21:36Z) -- right by three small real NIFC-confirmed fires: Moose (US-MT, 125ac, 46.07N/-113.69W), Butterfly (US-MT, 5ac, 46.26N/-113.91W), and Black Bear (US-MT, 5ac, 46.17N/-113.89W). Fire display threshold lowered from 100ac to 1ac after Butterfly/Black Bear were confirmed real but filtered out. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
     },
     filed:[
-      {lat:43.56,lon:-116.22,n:"wp0"},{lat:43.58,lon:-116.26,n:"wp1"},{lat:43.62,lon:-116.33,n:"wp2"},{lat:43.66,lon:-116.39,n:"wp3"},
-      {lat:43.67,lon:-116.39,n:"wp4"},{lat:43.69,lon:-116.38,n:"wp5"},{lat:43.83,lon:-116.3,n:"wp6"},{lat:43.98,lon:-116.21,n:"wp7"},
-      {lat:44.13,lon:-116.12,n:"wp8"},{lat:44.17,lon:-116.1,n:"wp9"},{lat:44.21,lon:-116.08,n:"wp10"},{lat:44.32,lon:-116.02,n:"wp11"},
-      {lat:44.47,lon:-115.95,n:"wp12"},{lat:44.64,lon:-115.86,n:"wp13"},{lat:45.34,lon:-115.51,n:"wp14"},{lat:45.45,lon:-115.45,n:"wp15"},
-      {lat:45.9,lon:-115.21,n:"wp16"},{lat:46.17,lon:-115.08,n:"wp17"},{lat:46.23,lon:-115.06,n:"wp18"},{lat:46.25,lon:-115.0,n:"wp19"},
-      {lat:46.41,lon:-114.83,n:"wp20"},{lat:46.08,lon:-115.0,n:"wp21"},{lat:45.34,lon:-115.37,n:"wp22"},{lat:45.06,lon:-115.51,n:"wp23"},
-      {lat:44.9,lon:-115.59,n:"wp24"},{lat:44.67,lon:-115.7,n:"wp25"},{lat:44.5,lon:-115.78,n:"wp26"},{lat:44.45,lon:-115.8,n:"wp27"},
-      {lat:47.66,lon:-113.28,n:"FCA R-100/42 hold (D1+30)"},{lat:47.33,lon:-113.72,n:"wp29"},{lat:46.4,lon:-114.34,n:"MSO R-210/60 hold (D1+30)"},{lat:45.35,lon:-115.0,n:"wp31"},
-      {lat:45.33,lon:-115.01,n:"wp32"},{lat:44.99,lon:-115.25,n:"wp33"},{lat:44.83,lon:-115.37,n:"wp34"},{lat:44.61,lon:-115.51,n:"wp35"},
-      {lat:44.45,lon:-115.62,n:"wp36"},{lat:44.41,lon:-115.65,n:"wp37"},{lat:44.2,lon:-115.8,n:"wp38"},{lat:44.15,lon:-115.83,n:"wp39"},
-      {lat:44.05,lon:-115.9,n:"wp40"},{lat:43.85,lon:-116.03,n:"wp41"},{lat:43.7,lon:-116.13,n:"wp42"},{lat:43.63,lon:-116.18,n:"wp43"},
-      {lat:43.56,lon:-116.22,n:"Return to KBOI"}
+      {lat:43.5644,lon:-116.2229,n:"KBOI departure"},
+      {lat:46.16667,lon:-115.08333,n:"4610N/11505W"},
+      {lat:48.02762,lon:-113.29685,n:"FCA R-100/42 hold (D1+30)"},
+      {lat:46.17874,lon:-115.07712,n:"MSO R-210/60 hold (D1+30)"},
+      {lat:46.05,lon:-113.7,n:"4603N/11342W"},
+      {lat:45.65,lon:-113.2,n:"4539N/11312W"},
+      {lat:44.33333,lon:-114.13333,n:"4420N/11408W"},
+      {lat:43.5644,lon:-116.2229,n:"Return to KBOI"}
     ],
     actual:[
       [1785693161,43.5695,-116.2408,3000],[1785693194,43.5844,-116.2834,4000],[1785693231,43.6011,-116.3348,5300],[1785693259,43.6167,-116.3767,6200],[1785693275,43.6283,-116.3939,6700],[1785693287,43.6422,-116.401,7100],

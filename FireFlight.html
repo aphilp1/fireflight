@@ -1095,7 +1095,7 @@ const MISSIONS = [
       operator:"NASA Langley Research Center", payload:"",
       dep:"KBOI", arr:"KBOI", offBlockLocal:"11:52 AM MDT", etaLocal:"04:52 PM MDT (filed)",
       note:"Round trip out of Boise (Gowen Field), returning to Boise. Filed route and both the filed-route waypoints and the actual recorded track below are pulled directly from FlightAware's own data (trackpollBootstrap JSON embedded in the live flight page, id NASA520-1785681911-sw-2922p) -- not reconstructed or approximated. Filed speed 375 kts, filed altitude 28,000 ft, filed duration 5:07:00 (18420s, matches FlightAware's own ete field exactly). Filed route text: VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W.",
-      pattern:"Real recorded track below is FlightAware's own track data for this flight (not airplanes.live/adsb.lol), auto-refreshed periodically by a scheduled re-pull, permanently baked into this file each cycle (not dependent on any browser tab staying open) -- 455 baked points so far (downsampled 1-in-2 from FlightAware's raw feed), 18:12Z-21:26Z as of the last refresh, still in progress (status: airborne). Note: FlightAware's own plotted route-line waypoints changed as of the 20:45Z refresh (42->45 points, planned distance 694->810nm) -- the underlying filed route TEXT is unchanged (still VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W); still unconfirmed whether that's a genuine FAA amendment or FlightAware's own recalculation. Visible in the real recorded track: climbed out of Boise, flew many repeated north-south survey passes over the Missoula-to-Kalispell/Flathead corridor (Silvertip fire area), then since ~20:16Z has been circling in a second area further south, roughly 46.0-46.36N/-115.0 to -115.28W (central Idaho, near the Salmon-Challis NF), with multiple loops -- has NOT proceeded toward Boise yet despite earlier southwest movement. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
+      pattern:"Real recorded track below is FlightAware's own track data for this flight (not airplanes.live/adsb.lol), auto-refreshed periodically by a scheduled re-pull, permanently baked into this file each cycle (not dependent on any browser tab staying open) -- 478 baked points so far (downsampled 1-in-2 from FlightAware's raw feed), 18:12Z-21:36Z as of the last refresh, still in progress (status: airborne). Note: FlightAware's own plotted route-line waypoints changed as of the 20:45Z refresh (42->45 points, planned distance 694->810nm) -- the underlying filed route TEXT is unchanged (still VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W); still unconfirmed whether that's a genuine FAA amendment or FlightAware's own recalculation. Visible in the real recorded track: climbed out of Boise, flew many repeated north-south survey passes over the Missoula-to-Kalispell/Flathead corridor (Silvertip fire area), circled ~20:16Z-21:26Z over central Idaho (46.0-46.36N/-115.0 to -115.28W, Salmon-Challis NF), then flew directly east across the Bitterroot Range starting ~21:26Z, now over the Bitterroot Valley near 46.14N/-114.02W (21:36Z) -- right by three small real NIFC-confirmed fires: Moose (US-MT, 125ac, 46.07N/-113.69W), Butterfly (US-MT, 5ac, 46.26N/-113.91W), and Black Bear (US-MT, 5ac, 46.17N/-113.89W). Fire display threshold lowered from 100ac to 1ac after Butterfly/Black Bear were confirmed real but filtered out. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
     },
     filed:[
       {lat:43.56,lon:-116.22,n:"wp0"},{lat:43.58,lon:-116.26,n:"wp1"},{lat:43.62,lon:-116.33,n:"wp2"},{lat:43.66,lon:-116.39,n:"wp3"},
@@ -1190,7 +1190,11 @@ const MISSIONS = [
       [1785705594,46.2664,-115.0666,28100],
       [1785705606,46.2828,-115.0806,28100],[1785705637,46.3283,-115.1119,28000],[1785705656,46.3588,-115.1141,28000],[1785705669,46.3775,-115.0942,28000],[1785705681,46.3859,-115.0605,28000],[1785705694,46.3823,-115.0284,28000],
       [1785705706,46.3699,-115.0055,28000],[1785705721,46.3472,-114.9991,28000],[1785705765,46.2844,-115.0206,28100],[1785705827,46.1929,-115.0576,28100],[1785705887,46.1029,-115.0936,28100],[1785705918,46.0577,-115.1127,28000],
-      [1785705934,46.0359,-115.1255,28000],[1785705947,46.0227,-115.1415,28000],[1785705958,46.0139,-115.1621,28000],[1785705973,46.0061,-115.1906,28000],[1785706004,45.9876,-115.2491,28100]
+      [1785705934,46.0359,-115.1255,28000],[1785705947,46.0227,-115.1415,28000],[1785705958,46.0139,-115.1621,28000],[1785705973,46.0061,-115.1906,28000],[1785706004,45.9876,-115.2491,28100],
+      [1785706015,45.9792,-115.2682,28000],[1785706030,45.9635,-115.2886,28000],[1785706041,45.948,-115.2896,28000],[1785706052,45.9325,-115.2755,28000],[1785706065,45.9238,-115.2471,28000],[1785706078,45.9259,-115.2132,28000],
+      [1785706091,45.9405,-115.1832,28000],[1785706105,45.961,-115.1619,28100],[1785706128,46.0014,-115.1389,28100],[1785706177,46.0894,-115.1005,28100],[1785706225,46.1786,-115.0637,28100],[1785706247,46.218,-115.0456,28100],
+      [1785706258,46.2383,-115.0287,28100],[1785706271,46.2571,-115.0022,28000],[1785706283,46.2695,-114.9734,28000],[1785706300,46.275,-114.9235,28000],[1785706329,46.2743,-114.8353,28000],[1785706366,46.2667,-114.7246,28100],
+      [1785706398,46.2555,-114.6307,28100],[1785706445,46.2289,-114.4964,28100],[1785706510,46.1916,-114.3047,28100],[1785706578,46.1527,-114.1052,28100],[1785706608,46.1353,-114.0171,28100]
     ],
     tfrs:[
   {id:"6/0576", name:"29NM NW KALISPELL, MT", up:null, eff:"2026-07-31", exp:"2026-08-14",
@@ -1276,7 +1280,7 @@ async function jgetAc(path){
 
 async function loadFires(BOX){
   const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query'+
-    '?where=IncidentSize%3E100&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
+    '?where=IncidentSize%3E1&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
     '&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&f=json';
   const j=await jget(u);
   const fs=(j.features||[]).filter(f=>f.geometry).sort((a,b)=>(b.attributes.IncidentSize||0)-(a.attributes.IncidentSize||0));
@@ -1296,7 +1300,7 @@ async function loadFires(BOX){
       '<div class="sub">'+esc(a.POOState||'')+' · '+esc(a.FireCause||'cause n/r')+'</div>'+
       '<div class="row"><span><b>'+fmt(ac)+'</b> ac</span><span><b>'+(ct==null?'—':ct+'%')+'</b> contained</span></div></div>');
   });
-  document.getElementById('fireList').innerHTML=html.join('')||'<div style="color:#5b6b7a">no fires &gt;100 ac in view</div>';
+  document.getElementById('fireList').innerHTML=html.join('')||'<div style="color:#5b6b7a">no fires &gt;1 ac in view</div>';
   document.querySelectorAll('#fireList .card').forEach(c=>c.onclick=()=>map.setView([+c.dataset.la,+c.dataset.lo],10));
   return fs.length;
 }
@@ -1304,7 +1308,7 @@ async function loadFires(BOX){
 async function loadPerimeters(BOX){
   try{
     const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query'+
-      '?where=poly_GISAcres%3E100&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
+      '?where=poly_GISAcres%3E1&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
       '&spatialRel=esriSpatialRelIntersects&outFields=poly_IncidentName,poly_GISAcres&returnGeometry=true'+
       '&maxAllowableOffset=0.004&outSR=4326&f=geojson';
     const j=await jget(u);

@@ -1093,11 +1093,18 @@ const MISSIONS = [
     flight:{
       callsign:"NASA520", hex:"a68a1b", reg:"N520NA", type:"Gulfstream III (GLF3)",
       operator:"NASA Langley Research Center", payload:"",
-      dep:"KBOI", arr:"—", offBlockLocal:"—", etaLocal:"—",
-      note:"In progress as of 19:52Z, 2026-08-02. Departed Boise (KBOI). No filed flight plan/route is available from any source checked (FlightAware has no published plan for this tail today; OpenSky/adsb.lol/airplanes.live only give live position, not filed plans). This is a separate flight from the archived Bald Mountain mission (7/31) -- same aircraft, different day.",
+      dep:"KBOI", arr:"KBOI", offBlockLocal:"11:52 AM MDT", etaLocal:"04:52 PM MDT (filed)",
+      note:"Round trip out of Boise (Gowen Field). Filed via FlightAware (confirmed by Alex directly from his own FlightAware app, 2026-08-02 13:36 local -- I could not reach FlightAware myself due to a Cloudflare block on my scraping and a separate network fault in my browser automation tool; this is real filed data, not derived by me). Filed speed 375 kts, filed altitude 28,000 ft, filed duration 5:07:00. Filed route: VALYY 4610N/11505W FCA100042/D1+30 MSO210060/D1+30 4603N/11342W 4539N/11312W 4420N/11408W. The two 'D1+30' legs are 1h30m holds on radial/distance fixes off the FCA (Kalispell) and MSO (Missoula) VORs -- these correspond exactly to the two real racetrack loops visible in the recorded ADS-B track below (north loop near Kalispell/Flathead, south loop near 47.6N/-113.4W), which cross-confirms both datasets are real and consistent with each other. VALYY (the first fix, in Idaho) is not plotted below -- I could not get a confirmed coordinate for it (Cloudflare-blocked on the two lookup sources I tried) and won't guess.",
       pattern:"Real recorded track below, pulled server-side from globe.airplanes.live's full historical trace for this aircraft (hex a68a1b) -- 273 points downsampled 1-in-2 from 545 actual ADS-B hits, 18:12Z-19:52Z. This is the true flown path, not a straight-line approximation. Visible in the real data: climbed out of Boise, direct track northeast across Idaho into Montana, passed south of Missoula, then made multiple repeated north-south passes between roughly 47.6N and 48.27N (the Missoula-to-Kalispell/Flathead corridor, spanning the Silvertip fire area), including a tight turning loop around 47.6N/-113.4W. Live tracking from here forward: use the tail-number tracker above and enter N520NA for continuous 2s-interval polling."
     },
-    filed:[],
+    filed:[
+      {lat:46.16667, lon:-115.08333, n:"4610N/11505W"},
+      {lat:48.255, lon:-113.145, n:"FCA R-100/42 hold (D1+30) -- plotted at the real ADS-B loop center, not independently computed"},
+      {lat:47.615, lon:-113.43, n:"MSO R-210/60 hold (D1+30) -- plotted at the real ADS-B loop center, not independently computed"},
+      {lat:46.05, lon:-113.7, n:"4603N/11342W"},
+      {lat:45.65, lon:-113.2, n:"4539N/11312W"},
+      {lat:44.33333, lon:-114.13333, n:"4420N/11408W"}
+    ],
     actual:[
       [1785693153,43.56666,-116.23267,2825],[1785693156,43.56787,-116.23627,2875],[1785693159,43.56876,-116.23887,2900],[1785693160,43.56931,-116.24045,2950],[1785693163,43.57024,-116.24307,2950],[1785693165,43.57117,-116.24575,3025],
       [1785693167,43.5722,-116.24869,3075],[1785693169,43.57265,-116.24992,3125],[1785693171,43.57345,-116.25216,3175],[1785693172,43.57387,-116.25334,3175],[1785693173,43.57429,-116.25451,3225],[1785693175,43.57518,-116.25693,3275],

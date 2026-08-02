@@ -1088,7 +1088,54 @@ const MISSIONS = [
     tfrNote:"FAA TFR snapshot 2026-08-02T15:19Z (refreshed for Sunday -- 2 TFRs renewed under new NOTAM numbers, 2 new ones added near Spokane since the Aug 1 bake) — tfr.faa.gov sends no CORS header, so these are baked in (not live); box covers the fire + the ER-2's filed route out toward north-central WA. Ceiling altitudes not confirmed (no reachable per-TFR endpoint) -- shown as '—'. MOA/restricted (Okanogan A/B/C, Roosevelt A/B, Fairchild AFB R-6714 A-H) and fires/perimeters are live, not baked." },
   { id:"bald_mountain", label:"NASA520 · BALD MTN (7/31)", snapshotUtc:SNAPSHOT_UTC, archived:true,
     flight:FLIGHT, filed:FILED, actual:ACTUAL, tfrs:TFRS,
-    box:"-121.2,41.6,-114.6,46.4", tfrNote:"FAA TFR snapshot "+SNAPSHOT_UTC+" — tfr.faa.gov sends no CORS header, so these are baked in, not live. Mission complete/archived; aircraft on the ground, live poll will just show no contact." }
+    box:"-121.2,41.6,-114.6,46.4", tfrNote:"FAA TFR snapshot "+SNAPSHOT_UTC+" — tfr.faa.gov sends no CORS header, so these are baked in, not live. Mission complete/archived; aircraft on the ground, live poll will just show no contact." },
+  { id:"nasa520_0802", label:"N520NA · NASA520 (8/2)", snapshotUtc:"2026-08-02T18:45Z", archived:false,
+    flight:{
+      callsign:"NASA520", hex:"a68a1b", reg:"N520NA", type:"Gulfstream III (GLF3)",
+      operator:"NASA Langley Research Center", payload:"",
+      dep:"KBOI", arr:"—", offBlockLocal:"—", etaLocal:"—",
+      note:"In progress as of 18:45Z, 2026-08-02. Departed Boise (KBOI). No filed flight plan/route is available from any source checked (FlightAware has no published plan for this tail today; OpenSky/adsb.lol/airplanes.live only give live position, not filed plans). This is a separate flight from the archived Bald Mountain mission (7/31) -- same aircraft, different day.",
+      pattern:"Track below is real ADS-B, hand-sampled by Claude during this session (not a continuous poll -- 7 verified fixes 18:16Z-18:45Z, cross-checked across airplanes.live/adsb.lol/OpenSky). Departed KBOI, climbed NE over Idaho, passed south of Missoula MT, continued N to 48.18N near Kalispell/Flathead (18:38Z), then turned south back toward the Silvertip fire area, last fix 47.85N/-113.26W at FL280 (18:45Z) -- consistent with a survey pattern over Silvertip, similar to NASA806's 8/1 mission. Live tracking from here forward: use the tail-number tracker above and enter N520NA."
+    },
+    filed:[],
+    actual:[
+      [1785694582,45.93449,-115.19529,28000],[1785694631,46.00383,-115.164319,28000],
+      [1785694734,46.2198,-115.0681,28000],[1785695687,47.77051,-113.287213,28000],
+      [1785695920,48.182497,-113.236084,28000],[1785696255,47.9333,-113.2316,28000],
+      [1785696313,47.8497,-113.2584,28000]
+    ],
+    tfrs:[
+  {id:"6/0576", name:"29NM NW KALISPELL, MT", up:null, eff:"2026-07-31", exp:"2026-08-14",
+   ring:[[48.517,-115.017],[48.375,-114.858],[48.45,-114.692],[48.592,-114.75],[48.592,-114.967]]},
+  {id:"6/0575", name:"29NM NW KALISPELL, MT", up:null, eff:"2026-07-31", exp:"2026-08-14",
+   ring:[[48.517,-115.017],[48.375,-114.858],[48.45,-114.692],[48.592,-114.75],[48.592,-114.967]]},
+  {id:"6/9882", name:"10NM NW MISSOULA, MT", up:null, eff:"2026-07-29", exp:"2026-08-12",
+   ring:[[47.008,-114.325],[46.967,-114.283],[46.892,-114.283],[46.958,-114.214],[46.975,-114.225]]},
+  {id:"6/9883", name:"13NM NW MISSOULA, MT", up:null, eff:"2026-07-29", exp:"2026-08-12",
+   ring:[[47.008,-114.433],[46.917,-114.375],[46.892,-114.283],[46.967,-114.283],[47.008,-114.325]]},
+  {id:"6/0901", name:"39NM SW BUTTE, MT", up:null, eff:"2026-08-02", exp:"2026-08-17",
+   ring:[[45.483,-113.425],[45.483,-113.142],[45.708,-113.058],[45.708,-113.283],[45.642,-113.425]]},
+  {id:"6/0898", name:"10NM E HAMILTON, MT", up:null, eff:"2026-08-02", exp:"2026-08-17",
+   ring:[[46.117,-114.033],[46.117,-113.85],[46.192,-113.775],[46.35,-113.8],[46.35,-114.033]]},
+  {id:"6/0713", name:"56NM E HELENA, MT", up:null, eff:"2026-08-01", exp:"2026-08-16",
+   ring:[[46.742,-110.827],[46.718,-110.824],[46.696,-110.815],[46.675,-110.801],[46.656,-110.782],[46.64,-110.758],[46.626,-110.73],[46.616,-110.699],[46.61,-110.667],[46.608,-110.633],[46.61,-110.6],[46.616,-110.567],[46.626,-110.537],[46.64,-110.509],[46.656,-110.485],[46.675,-110.466],[46.696,-110.451],[46.718,-110.442],[46.742,-110.439],[46.765,-110.442],[46.787,-110.451],[46.808,-110.465],[46.827,-110.485],[46.844,-110.508],[46.857,-110.536],[46.867,-110.567],[46.873,-110.6],[46.875,-110.633],[46.873,-110.667],[46.867,-110.7],[46.857,-110.73],[46.844,-110.758],[46.827,-110.782],[46.808,-110.801],[46.787,-110.816],[46.765,-110.824]]},
+  {id:"6/0569", name:"8NM NE BOISE, ID", up:null, eff:"2026-07-31", exp:"2026-08-08",
+   ring:[[43.667,-116.138],[43.661,-116.137],[43.655,-116.135],[43.65,-116.131],[43.645,-116.127],[43.641,-116.121],[43.638,-116.115],[43.635,-116.107],[43.634,-116.1],[43.633,-116.092],[43.634,-116.084],[43.635,-116.076],[43.638,-116.069],[43.641,-116.062],[43.645,-116.056],[43.65,-116.052],[43.655,-116.049],[43.661,-116.046],[43.667,-116.046],[43.672,-116.046],[43.678,-116.049],[43.683,-116.052],[43.688,-116.056],[43.692,-116.062],[43.696,-116.069],[43.698,-116.076],[43.699,-116.084],[43.7,-116.092],[43.699,-116.1],[43.698,-116.107],[43.696,-116.115],[43.692,-116.121],[43.688,-116.127],[43.683,-116.131],[43.678,-116.135],[43.672,-116.137]]},
+  {id:"6/0307", name:"20NM SE HELENA, MT", up:null, eff:"2026-07-30", exp:"2026-08-13",
+   ring:[[46.283,-111.987],[46.269,-111.985],[46.255,-111.98],[46.242,-111.971],[46.23,-111.959],[46.219,-111.944],[46.211,-111.927],[46.205,-111.908],[46.201,-111.888],[46.2,-111.867],[46.201,-111.846],[46.205,-111.826],[46.211,-111.807],[46.219,-111.79],[46.23,-111.775],[46.242,-111.763],[46.255,-111.754],[46.269,-111.748],[46.283,-111.747],[46.298,-111.748],[46.312,-111.754],[46.325,-111.763],[46.337,-111.775],[46.347,-111.789],[46.355,-111.807],[46.362,-111.826],[46.365,-111.846],[46.367,-111.867],[46.365,-111.888],[46.362,-111.908],[46.355,-111.927],[46.347,-111.944],[46.337,-111.959],[46.325,-111.971],[46.312,-111.98],[46.298,-111.985]]},
+  {id:"6/9877", name:"38NM N SANDPOINT, ID", up:null, eff:"2026-07-29", exp:"2026-08-12",
+   ring:[[48.825,-116.75],[48.825,-116.467],[48.992,-116.467],[48.992,-116.75]]},
+  {id:"6/8883", name:"23NM SE HAMILTON, MT", up:null, eff:"2026-07-27", exp:"2026-08-09",
+   ring:[[46.083,-113.786],[46.069,-113.785],[46.055,-113.779],[46.042,-113.77],[46.03,-113.758],[46.019,-113.744],[46.011,-113.726],[46.005,-113.708],[46.001,-113.687],[46.0,-113.667],[46.001,-113.646],[46.005,-113.626],[46.011,-113.607],[46.019,-113.59],[46.03,-113.575],[46.042,-113.563],[46.055,-113.554],[46.069,-113.549],[46.083,-113.547],[46.098,-113.549],[46.112,-113.554],[46.125,-113.563],[46.137,-113.575],[46.147,-113.59],[46.155,-113.607],[46.162,-113.626],[46.165,-113.646],[46.167,-113.667],[46.165,-113.687],[46.162,-113.708],[46.155,-113.727],[46.147,-113.744],[46.137,-113.758],[46.125,-113.77],[46.112,-113.779],[46.098,-113.785]]},
+  {id:"6/8578", name:"8NM SW HAMILTON, MT", up:null, eff:"2026-07-26", exp:"2026-08-09",
+   ring:[[46.158,-114.437],[46.144,-114.435],[46.13,-114.429],[46.117,-114.42],[46.105,-114.408],[46.094,-114.394],[46.086,-114.377],[46.08,-114.358],[46.076,-114.337],[46.075,-114.317],[46.076,-114.296],[46.08,-114.276],[46.086,-114.257],[46.094,-114.24],[46.105,-114.225],[46.117,-114.213],[46.13,-114.204],[46.144,-114.199],[46.158,-114.197],[46.173,-114.199],[46.187,-114.204],[46.2,-114.213],[46.212,-114.225],[46.222,-114.24],[46.23,-114.257],[46.237,-114.276],[46.24,-114.296],[46.242,-114.317],[46.24,-114.338],[46.237,-114.358],[46.23,-114.377],[46.222,-114.394],[46.212,-114.409],[46.2,-114.421],[46.187,-114.429],[46.173,-114.435]]},
+  {id:"6/0943", name:"47NM SW MCCALL, ID", up:null, eff:"2026-08-02", exp:"2026-08-15",
+   ring:[[44.45,-117.192],[44.342,-117.133],[44.183,-116.783],[44.433,-116.783],[44.6,-116.95],[44.658,-117.083]]},
+  {id:"6/0725", name:"17NM NE IDAHO FALLS, ID", up:null, eff:"2026-08-01", exp:"2026-08-14",
+   ring:[[43.625,-111.748],[43.61,-111.746],[43.596,-111.741],[43.583,-111.733],[43.571,-111.721],[43.561,-111.707],[43.553,-111.691],[43.547,-111.673],[43.543,-111.653],[43.542,-111.633],[43.543,-111.613],[43.547,-111.594],[43.553,-111.576],[43.561,-111.56],[43.571,-111.546],[43.583,-111.534],[43.596,-111.526],[43.61,-111.52],[43.625,-111.519],[43.639,-111.52],[43.653,-111.525],[43.667,-111.534],[43.679,-111.545],[43.689,-111.56],[43.697,-111.576],[43.703,-111.594],[43.707,-111.613],[43.708,-111.633],[43.707,-111.653],[43.703,-111.673],[43.697,-111.691],[43.689,-111.707],[43.679,-111.721],[43.667,-111.733],[43.653,-111.741],[43.639,-111.746]]}
+    ],
+    box:"-116.5,46.9,-112.4,49.1",
+    tfrNote:"Real FAA TFR polygons, pulled server-side by Claude 2026-08-02 18:45Z (tfr.faa.gov/geoserver WFS, sidesteps the missing CORS header). Altitude ceilings not available from this endpoint -- shown as '—', not guessed, matching the Silvertip mission's TFRs. eff/exp are date-only (no time-of-day in the source)." }
 ];
 </script>
 <script>
@@ -1134,10 +1181,14 @@ function altColor(a){ return C.air; }
 
 /* ---------------- live: fires (WFIGS), airspace (FAA), aircraft (airplanes.live) ---------------- */
 async function jget(u){ const r=await fetch(u); if(!r.ok) throw new Error(r.status); return r.json(); }
+async function jgetAc(path){
+  try{ return await jget('https://api.airplanes.live/v2'+path); }
+  catch(e){ return await jget('https://api.adsb.lol/v2'+path); }
+}
 
 async function loadFires(BOX){
   const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query'+
-    '?where=IncidentSize%3E1000&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
+    '?where=IncidentSize%3E100&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
     '&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&f=json';
   const j=await jget(u);
   const fs=(j.features||[]).filter(f=>f.geometry).sort((a,b)=>(b.attributes.IncidentSize||0)-(a.attributes.IncidentSize||0));
@@ -1157,7 +1208,7 @@ async function loadFires(BOX){
       '<div class="sub">'+esc(a.POOState||'')+' · '+esc(a.FireCause||'cause n/r')+'</div>'+
       '<div class="row"><span><b>'+fmt(ac)+'</b> ac</span><span><b>'+(ct==null?'—':ct+'%')+'</b> contained</span></div></div>');
   });
-  document.getElementById('fireList').innerHTML=html.join('')||'<div style="color:#5b6b7a">no fires &gt;1000 ac in view</div>';
+  document.getElementById('fireList').innerHTML=html.join('')||'<div style="color:#5b6b7a">no fires &gt;100 ac in view</div>';
   document.querySelectorAll('#fireList .card').forEach(c=>c.onclick=()=>map.setView([+c.dataset.la,+c.dataset.lo],10));
   return fs.length;
 }
@@ -1206,8 +1257,16 @@ async function loadAirspace(BOX){
 async function pollAircraft(){
   const el=document.getElementById('live'), tx=document.getElementById('liveTxt');
   try{
-    const j=await jget('https://api.airplanes.live/v2/callsign/'+mission.flight.callsign);
-    const ac=(j.ac||[])[0];
+    let ac=null, src='ADS-B';
+    try{
+      const j=await jgetAc('/reg/'+encodeURIComponent(mission.flight.reg));
+      ac=(j.ac||[])[0]||null;
+    }catch(e){ /* fall through to OpenSky */ }
+    if(!ac && mission.flight.hex){
+      const os=await jget('https://opensky-network.org/api/states/all?icao24='+mission.flight.hex.toLowerCase());
+      const s=(os.states||[])[0];
+      if(s) { ac={lat:s[6],lon:s[5],alt_baro:s[7]!=null?Math.round(s[7]*3.28084):null,gs:s[9]!=null?Math.round(s[9]*1.94384):null,track:s[10],r:mission.flight.reg}; src='OpenSky'; }
+    }
     if(!ac){ el.classList.remove('on'); tx.textContent='no ADS-B contact — aircraft on ground or out of coverage'; return; }
     const la=ac.lat, lo=ac.lon, alt=(ac.alt_baro==='ground'?0:ac.alt_baro), gs=ac.gs, trk=ac.track;
     document.getElementById('tAlt').textContent = alt?fmt(alt)+"'":'GND';
@@ -1229,7 +1288,7 @@ async function pollAircraft(){
       if(liveLine) liveLine.setLatLngs(liveTrail);
     }
     el.classList.add('on');
-    tx.textContent='live · '+new Date().toLocaleTimeString()+' · '+esc(ac.r||'')+' via airplanes.live';
+    tx.textContent='live · '+new Date().toLocaleTimeString()+' · '+esc(ac.r||'')+' via '+src;
   }catch(e){ el.classList.remove('on'); tx.textContent='ADS-B feed unreachable ('+e.message+')'; }
 }
 
@@ -1392,7 +1451,7 @@ async function addMissionByTail(tailRaw){
   msgEl.textContent = 'Looking up '+tail+' via airplanes.live...';
   let j;
   try{
-    j = await jget('https://api.airplanes.live/v2/reg/'+encodeURIComponent(tail));
+    j = await jgetAc('/reg/'+encodeURIComponent(tail));
   }catch(e){
     msgEl.textContent = tail+': ADS-B lookup failed ('+e.message+').';
     return;

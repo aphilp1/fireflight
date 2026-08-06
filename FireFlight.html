@@ -1886,7 +1886,13 @@ async function addMissionByTail(tailRaw){
       etaLocal: plan.actual_on ? ('Landed '+plan.actual_on) : (plan.scheduled_on || '—'),
       note:'Filed route (AeroAPI, auto-fetched): '+(plan.route||'—')+'. Filed '+(plan.filed_airspeed_kts||'?')+' kts, '+(plan.filed_altitude_ft||'?')+' ft. Status: '+(plan.status||'unknown')+'. Auto-built by typing '+tail+' into the tracker -- no manual chat/paste involved.',
       pattern: (actualTrack.length ? 'Full recorded track ('+actualTrack.length+' points) pulled from AeroAPI\'s own track history, real door-to-door coverage, not just live-forward. ' : 'No recorded track available yet from AeroAPI. ')
-        + (ac ? 'Live ADS-B position also available -- will keep extending forward from here.' : 'Not currently airborne -- live track will pick up automatically once it departs, via the same poll used by every other mission.')
+        + (ac
+           ? 'Live ADS-B position also available -- will keep extending forward from here.'
+           : ((plan.status||'').toLowerCase().includes('en route')
+              ? 'AeroAPI confirms this flight is currently En Route (departed '+(plan.actual_off||'?')+', not yet landed) -- but no live ADS-B contact right now, likely a coverage gap or a stale/wrong hex, NOT a landing. Will keep polling.'
+              : (plan.actual_on
+                 ? 'Landed per AeroAPI ('+plan.actual_on+').'
+                 : 'Not currently airborne per AeroAPI (status: '+(plan.status||'unknown')+') -- live track will pick up automatically once it departs.')))
     };
   } else {
     // no filed plan found -- fall back to the original live-only behavior, unchanged
@@ -1918,8 +1924,12 @@ async function addMissionByTail(tailRaw){
   saveTailMissionsToStorage();
   renderMissionTabs();
   renderMission(MISSIONS.length-1);
+  const statusTxt = plan && !ac
+    ? ((plan.status||'').toLowerCase().includes('en route') ? 'En route per AeroAPI, no live ADS-B contact right now (coverage gap).'
+       : plan.actual_on ? 'Landed.' : 'Not airborne yet.')
+    : (ac ? 'Live-tracking now.' : '');
   msgEl.textContent = plan
-    ? ('Built '+tail+' from filed plan + '+tfrs.length+' TFR(s). '+(ac?'Live-tracking now.':'Will start tracking once airborne.'))
+    ? ('Built '+tail+' from filed plan + '+tfrs.length+' TFR(s). '+statusTxt)
     : ('Tracking '+tail+' live. Recording flight path from now forward.');
 }
 document.getElementById('addTailBtn').onclick = () => addMissionByTail(document.getElementById('addTailInput').value);

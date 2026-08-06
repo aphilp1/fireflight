@@ -1487,6 +1487,58 @@ const C=Object.fromEntries(['air','air-pale','fire','contained','tfr','tfr-sec',
 const NM=1852, esc=s=>String(s==null?'':s).replace(/[<>&]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
 const fmt=n=>n==null?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
 
+/* ---------------- persisted auto-built missions (2026-08-06) ---------------- */
+/* Missions built via the tail-number tracker only ever lived in MISSIONS.push()
+   (in-tab JS memory), so a refresh silently discarded them -- same root cause as
+   the 8/4 mission's live-only track almost getting lost. Since auto-built missions
+   now carry a full real track + TFRs (not just live position), losing them on
+   refresh is a real problem, not a cosmetic one. Persisted to localStorage,
+   loaded back in here before the initial missionIdx is picked. Baked/curated
+   missions in MISSIONS above are never touched by this. */
+const TAIL_STORAGE_KEY = 'fireflight_tail_missions_v1';
+try{
+  const saved = JSON.parse(localStorage.getItem(TAIL_STORAGE_KEY) || '[]');
+  saved.forEach(m=>{ if(!MISSIONS.some(x=>x.id===m.id)) MISSIONS.push(m); });
+}catch(e){ /* corrupted/old localStorage entry -- ignore, don't block boot */ }
+function saveTailMissionsToStorage(){
+  try{
+    const tailMissions = MISSIONS.filter(m=>m.id.startsWith('tail_'));
+    localStorage.setItem(TAIL_STORAGE_KEY, JSON.stringify(tailMissions));
+  }catch(e){ /* storage full/unavailable -- non-fatal, mission still works this session */ }
+}
+
+/* 2026-08-06, per Alex: fires and TFRs must be filtered to within 100mi of the
+   actual corridor line (filed route UNION flown track), not a loose bounding box.
+   Mirrors the same math in serve.py's dist_to_route_mi/point_to_segment_mi.
+   TFRs are already filtered server-side; this is the client-side equivalent for
+   fires/perimeters, which load live from NIFC and can't be pre-filtered server-side
+   without changing that live-fetch architecture. Only activates when a mission
+   provides corridorRoute -- baked missions without it are completely unaffected. */
+function haversineMi(lat1,lon1,lat2,lon2){
+  const R=3958.8, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLon=toRad(lon2-lon1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function pointToSegmentMi(plat,plon,alat,alon,blat,blon){
+  const mlat=Math.cos(alat*Math.PI/180)||1e-9;
+  const ax=0,ay=0,bx=(blon-alon)*mlat,by=(blat-alat),px=(plon-alon)*mlat,py=(plat-alat);
+  const dx=bx-ax,dy=by-ay,len2=dx*dx+dy*dy;
+  const t=len2===0?0:Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/len2));
+  const cx=ax+t*dx,cy=ay+t*dy;
+  return haversineMi(plat,plon,alat+cy,alon+cx/mlat);
+}
+function distToRouteMi(lat,lon,route){
+  if(!route||route.length===0) return Infinity;
+  if(route.length===1) return haversineMi(lat,lon,route[0][0],route[0][1]);
+  let min=Infinity;
+  for(let i=0;i<route.length-1;i++){
+    const d=pointToSegmentMi(lat,lon,route[i][0],route[i][1],route[i+1][0],route[i+1][1]);
+    if(d<min) min=d;
+  }
+  return min;
+}
+
 /* ---------------- state ---------------- */
 let missionIdx=(MISSIONS.findIndex(m=>!m.archived)+1 ? MISSIONS.findIndex(m=>!m.archived) : MISSIONS.length-1), mission=MISSIONS[missionIdx], liveMarker=null, lastAcPos=null, liveTrail=[], liveLine=null, liveProfile=[];
 function circlePts(lat,lon,nm){
@@ -1504,12 +1556,15 @@ async function jgetAc(path){
   catch(e){ return await jget('https://api.adsb.lol/v2'+path); }
 }
 
-async function loadFires(BOX){
+async function loadFires(BOX,corridorRoute,corridorMi){
   const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query'+
     '?where=IncidentSize%3E1&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
     '&spatialRel=esriSpatialRelIntersects&outFields=*&returnGeometry=true&f=json';
   const j=await jget(u);
-  const fs=(j.features||[]).filter(f=>f.geometry).sort((a,b)=>(b.attributes.IncidentSize||0)-(a.attributes.IncidentSize||0));
+  let fs=(j.features||[]).filter(f=>f.geometry).sort((a,b)=>(b.attributes.IncidentSize||0)-(a.attributes.IncidentSize||0));
+  if(corridorRoute && corridorRoute.length){
+    fs=fs.filter(f=>distToRouteMi(f.geometry.y,f.geometry.x,corridorRoute)<=(corridorMi||100));
+  }
   const html=[];
   fs.forEach(f=>{
     const a=f.attributes, la=f.geometry.y, lo=f.geometry.x, ac=a.IncidentSize||0, ct=a.PercentContained;
@@ -1531,17 +1586,24 @@ async function loadFires(BOX){
   return fs.length;
 }
 
-async function loadPerimeters(BOX){
+async function loadPerimeters(BOX,corridorRoute,corridorMi){
   try{
     const u='https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query'+
       '?where=poly_GISAcres%3E1&geometry='+BOX+'&geometryType=esriGeometryEnvelope&inSR=4326'+
       '&spatialRel=esriSpatialRelIntersects&outFields=poly_IncidentName,poly_GISAcres&returnGeometry=true'+
       '&maxAllowableOffset=0.004&outSR=4326&f=geojson';
     const j=await jget(u);
-    L.geoJSON(j,{style:{color:C.fire,weight:1.8,fillColor:C.fire,fillOpacity:.26},
+    let feats=j.features||[];
+    if(corridorRoute && corridorRoute.length){
+      feats=feats.filter(f=>{
+        const rings=(f.geometry.type==='Polygon'?[f.geometry.coordinates[0]]:f.geometry.coordinates.map(c=>c[0]));
+        return rings.some(ring=>ring.some(pt=>distToRouteMi(pt[1],pt[0],corridorRoute)<=(corridorMi||100)));
+      });
+    }
+    L.geoJSON({type:'FeatureCollection',features:feats},{style:{color:C.fire,weight:1.8,fillColor:C.fire,fillOpacity:.26},
       onEachFeature:(f,l)=>l.bindPopup('<b>'+esc(f.properties.poly_IncidentName)+'</b><br>'+
         fmt(f.properties.poly_GISAcres)+' acres<br><span style="color:var(--dim)">NIFC perimeter</span>')}).addTo(gPerim);
-    return (j.features||[]).length;
+    return feats.length;
   }catch(e){ return 0; }
 }
 
@@ -1735,12 +1797,12 @@ async function renderMission(idx){
   drawProfile();
   map.fitBounds(boundsFor(m),{padding:[50,50]});
 
-  const f=await loadFires(m.box).catch(e=>{
+  const f=await loadFires(m.box,m.corridorRoute,m.corridorMi).catch(e=>{
     document.getElementById('fireList').innerHTML='<div style="color:var(--fire)">Could not reach NIFC WFIGS ('+e.message+
       ').<br><br><span style="color:var(--dim)">This app pulls fires live. If you are offline, or opening it inside a sandboxed preview panel that blocks outbound requests, the fire and airspace layers stay empty. Open the file directly in a browser.</span></div>'; return 0;});
   const a=await loadAirspace(m.box).catch(e=>{
     document.getElementById('airList').innerHTML='<div style="color:var(--fire)">Could not reach the FAA SUA service ('+e.message+').</div>'; return 0;});
-  const p=await loadPerimeters(m.box);
+  const p=await loadPerimeters(m.box,m.corridorRoute,m.corridorMi);
   document.getElementById('foot').innerHTML =
     f+' fires · '+p+' perimeters · '+a+' SUA · '+m.tfrs.length+' TFRs<br>'+
     'Live: NIFC WFIGS + FAA SUA + airplanes.live. Snapshot/baked data: '+m.snapshotUtc+'.';
@@ -1802,7 +1864,7 @@ async function addMissionByTail(tailRaw){
     return;
   }
 
-  let flight, filedArr, box, tfrs, tfrNote, snapshotNote;
+  let flight, filedArr, box, tfrs, tfrNote, snapshotNote, actualTrack, corridorRoute, corridorMi;
   if(plan){
     const o = plan.origin||{}, d = plan.destination||{};
     filedArr = [];
@@ -1811,7 +1873,10 @@ async function addMissionByTail(tailRaw){
     if(d.latitude!=null) filedArr.push({lat:d.latitude, lon:d.longitude, n:'Arrival '+(d.code_icao||d.code||'?')});
     box = plan.box || (ac ? boxAround(ac.lat,ac.lon,0.8,1.2/Math.max(0.2,Math.cos(ac.lat*Math.PI/180))) : '-125,25,-66,49');
     tfrs = (plan.tfrs||[]).map(t=>({id:t.id, name:t.name, up:null, eff:null, exp:null, ring:t.ring}));
-    tfrNote = 'Real FAA TFRs pulled server-side via local backend (tfr.faa.gov WFS layer TFR:V_TFR_LOC), auto-triggered by this tail lookup -- box widened using any VOR-radial/lat-lon tokens found in the filed route text, not just origin/destination (important for round trips where those are the same airport). Ceiling altitudes not available from this endpoint, shown as blank. Intermediate route points are an approximation (true-radial, no magnetic variation applied) -- NOT full fix-by-fix plotting, which would need FAA NASR navaid data this app does not have loaded.';
+    corridorRoute = plan.corridor_route || null;
+    corridorMi = plan.corridor_mi || 100;
+    actualTrack = plan.actual_track || [];
+    tfrNote = 'Real FAA TFRs pulled server-side via local backend (tfr.faa.gov WFS layer TFR:V_TFR_LOC), auto-triggered by this tail lookup -- filtered to within '+(plan.corridor_mi||100)+' miles of the actual filed route line (not just a loose box), per Alex\'s standing rule. That same '+(plan.corridor_mi||100)+'-mile corridor also sets the box used for the live fires layer. Ceiling altitudes not available from this endpoint, shown as blank. Intermediate route points are an approximation (true-radial, no magnetic variation applied) -- NOT full fix-by-fix plotting, which would need FAA NASR navaid data this app does not have loaded.';
     snapshotNote = new Date().toISOString().slice(0,16)+'Z (auto-built from AeroAPI filed plan'+(ac?' + live position':'')+')';
     flight = {
       callsign: plan.ident||tail, hex: ac?ac.hex:null, reg: plan.registration||tail,
@@ -1820,7 +1885,8 @@ async function addMissionByTail(tailRaw){
       offBlockLocal: plan.actual_off || plan.estimated_off || plan.scheduled_off || '—',
       etaLocal: plan.actual_on ? ('Landed '+plan.actual_on) : (plan.scheduled_on || '—'),
       note:'Filed route (AeroAPI, auto-fetched): '+(plan.route||'—')+'. Filed '+(plan.filed_airspeed_kts||'?')+' kts, '+(plan.filed_altitude_ft||'?')+' ft. Status: '+(plan.status||'unknown')+'. Auto-built by typing '+tail+' into the tracker -- no manual chat/paste involved.',
-      pattern: ac ? 'Live ADS-B position available -- track will record forward from here.' : 'Not currently airborne -- live track will pick up automatically once it departs, via the same poll used by every other mission.'
+      pattern: (actualTrack.length ? 'Full recorded track ('+actualTrack.length+' points) pulled from AeroAPI\'s own track history, real door-to-door coverage, not just live-forward. ' : 'No recorded track available yet from AeroAPI. ')
+        + (ac ? 'Live ADS-B position also available -- will keep extending forward from here.' : 'Not currently airborne -- live track will pick up automatically once it departs, via the same poll used by every other mission.')
     };
   } else {
     // no filed plan found -- fall back to the original live-only behavior, unchanged
@@ -1829,6 +1895,7 @@ async function addMissionByTail(tailRaw){
     filedArr = [];
     box = boxAround(lat,lon,padLat,padLon);
     tfrs = [];
+    actualTrack = [];
     tfrNote = 'TFRs not fetched for this flight (no AeroAPI filed-plan record found, so the box couldn\'t be widened past the live position -- tfr.faa.gov also blocks cross-origin requests from the browser directly). Ask Claude to pull them if needed.';
     snapshotNote = new Date().toISOString().slice(0,16)+'Z (live-added, no baked history)';
     flight = {
@@ -1843,11 +1910,12 @@ async function addMissionByTail(tailRaw){
   const newMission = {
     id:'tail_'+tail, label:tail+(flight.callsign&&flight.callsign!==tail?' · '+flight.callsign:''), archived:false,
     snapshotUtc:snapshotNote,
-    flight, filed:filedArr, actual:[], tfrs:tfrs,
-    box:box,
+    flight, filed:filedArr, actual:actualTrack, tfrs:tfrs,
+    box:box, corridorRoute:corridorRoute||null, corridorMi:corridorMi||null,
     tfrNote:tfrNote
   };
   MISSIONS.push(newMission);
+  saveTailMissionsToStorage();
   renderMissionTabs();
   renderMission(MISSIONS.length-1);
   msgEl.textContent = plan

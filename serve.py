@@ -5,6 +5,7 @@ import urllib.parse
 import json
 import os
 import re
+import math
 
 # --- /api/plan?tail=XXXX ---------------------------------------------------
 # Added 2026-08-05 to power FireFlight.html's existing tail-number "TRACK" box
@@ -99,6 +100,34 @@ def get_aeroapi_flight(tail):
         'fa_flight_id': f.get('fa_flight_id'),
     }
 
+def get_aeroapi_track(fa_flight_id):
+    """Full real position history for a flight (in-progress or completed) via
+    AeroAPI's own track endpoint -- same one used to backfill N520NA's missed
+    8/5 flight earlier tonight. Downsampled to ~300 points to keep the mission
+    payload reasonable."""
+    import datetime
+    if not fa_flight_id:
+        return []
+    try:
+        url = 'https://aeroapi.flightaware.com/aeroapi/flights/' + urllib.parse.quote(fa_flight_id) + '/track'
+        data = http_get_json(url, headers={'x-apikey': AEROAPI_KEY})
+        positions = data.get('positions', [])
+        pts = []
+        for p in positions:
+            ts = p.get('timestamp')
+            if not ts:
+                continue
+            epoch = int(datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
+                        .replace(tzinfo=datetime.timezone.utc).timestamp())
+            pts.append([epoch, p.get('latitude'), p.get('longitude'), round((p.get('altitude') or 0) * 100)])
+        target = 300
+        if len(pts) > target:
+            step = max(1, len(pts) // target)
+            pts = [p for i, p in enumerate(pts) if i % step == 0 or i == len(pts) - 1]
+        return pts
+    except Exception:
+        return []
+
 def get_airport_coords(icao):
     if not icao:
         return None
@@ -149,7 +178,36 @@ def extract_route_points(route_text):
         points.append({'lat': lat, 'lon': lon, 'label': m.group(0) + ' (literal coord in route)'})
     return points
 
-def get_tfrs_in_box(min_lon, min_lat, max_lon, max_lat):
+def haversine_mi(lat1, lon1, lat2, lon2):
+    R = 3958.8
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlmb = math.radians(lon2 - lon1)
+    a = math.sin(dphi / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dlmb / 2) ** 2
+    return 2 * R * math.asin(math.sqrt(a))
+
+def point_to_segment_mi(plat, plon, alat, alon, blat, blon):
+    """Approximate point-to-segment distance in miles using a local flat
+    projection (accurate enough at the ~100mi scale this is used for)."""
+    mlat = math.cos(math.radians(alat)) or 1e-9
+    ax, ay = 0.0, 0.0
+    bx, by = (blon - alon) * mlat, (blat - alat)
+    px, py = (plon - alon) * mlat, (plat - alat)
+    dx, dy = bx - ax, by - ay
+    len2 = dx * dx + dy * dy
+    t = 0.0 if len2 == 0 else max(0.0, min(1.0, ((px - ax) * dx + (py - ay) * dy) / len2))
+    cx, cy = ax + t * dx, ay + t * dy
+    clat, clon = alat + cy, alon + cx / mlat
+    return haversine_mi(plat, plon, clat, clon)
+
+def dist_to_route_mi(lat, lon, route):
+    """Min distance in miles from a point to any segment of the route polyline."""
+    if len(route) < 2:
+        return haversine_mi(lat, lon, route[0][0], route[0][1]) if route else float('inf')
+    return min(point_to_segment_mi(lat, lon, a[0], a[1], b[0], b[1])
+               for a, b in zip(route, route[1:]))
+
+def get_tfrs_near_route(route, corridor_mi):
     url = ('https://tfr.faa.gov/geoserver/TFR/ows?service=WFS&version=1.1.0&request=GetFeature'
            '&typeName=TFR:V_TFR_LOC&maxFeatures=300&outputFormat=application/json&srsname=EPSG:4326')
     data = http_get_json(url)
@@ -162,18 +220,19 @@ def get_tfrs_in_box(min_lon, min_lat, max_lon, max_lat):
         ring = coords[0] if geom.get('type') == 'Polygon' else None
         if not ring:
             continue
-        # bbox overlap check against the mission box
-        lons = [p[0] for p in ring]
-        lats = [p[1] for p in ring]
-        t_min_lon, t_max_lon, t_min_lat, t_max_lat = min(lons), max(lons), min(lats), max(lats)
-        overlaps = not (t_max_lon < min_lon or t_min_lon > max_lon or t_max_lat < min_lat or t_min_lat > max_lat)
-        if not overlaps:
+        # nearest ring point to the route line, within the corridor -- real
+        # distance-to-route, not a loose bounding-box guess (2026-08-06, per Alex:
+        # "only show fires and associated TFRs for 100 miles on other side of the
+        # filed flight path")
+        min_dist = min(dist_to_route_mi(p[1], p[0], route) for p in ring)
+        if min_dist > corridor_mi:
             continue
         props = feat.get('properties', {})
         out.append({
             'id': props.get('NOTAM_KEY', '').split('-')[0],
             'name': props.get('TITLE', ''),
             'ring': [[p[1], p[0]] for p in ring[:-1]],  # drop closing dup, [lat,lon]
+            'dist_mi': round(min_dist, 1),
         })
     return out
 
@@ -190,23 +249,52 @@ def build_mission_plan(tail):
     if d_coords:
         dest['latitude'], dest['longitude'] = d_coords
     route_pts = extract_route_points(fl.get('route') or '')
-    pts = [c for c in [o_coords, d_coords] if c is not None]
-    pts.extend([(p['lat'], p['lon']) for p in route_pts])
     fl['route_points'] = route_pts
+    actual_track = get_aeroapi_track(fl.get('fa_flight_id'))
+    fl['actual_track'] = actual_track
+
+    # ordered filed-plan line: origin -> route points -> destination.
+    route_line = []
+    if o_coords:
+        route_line.append(o_coords)
+    route_line.extend([(p['lat'], p['lon']) for p in route_pts])
+    if d_coords:
+        route_line.append(d_coords)
+
+    # corridor centerline = filed route UNION actual flown track (2026-08-06, per
+    # Alex: "100 miles on either side of flight plan and or actual path" -- a fire
+    # near where it actually flew must count even if that deviated from the filed
+    # line, same reasoning as the FCA/MSO/DTA hold points found off the straight
+    # filed route on earlier missions this week). Downsample the actual track for
+    # this distance-calc pass only (doesn't affect the full-resolution track baked
+    # into the mission) -- O(points x TFR-ring-points) needs to stay bounded.
+    actual_pts = [(p[1], p[2]) for p in actual_track]
+    if len(actual_pts) > 60:
+        step = max(1, len(actual_pts) // 60)
+        actual_pts = actual_pts[::step]
+    corridor_line = route_line + actual_pts
+    if not corridor_line and (o_coords or d_coords):
+        corridor_line = [c for c in [o_coords, d_coords] if c]
+
+    CORRIDOR_MI = 100
     tfrs = []
     box = None
-    if pts:
-        lats = [p[0] for p in pts]
-        lons = [p[1] for p in pts]
-        pad_lat, pad_lon = 1.0, 1.3
+    if corridor_line:
+        lats = [p[0] for p in corridor_line]
+        lons = [p[1] for p in corridor_line]
+        pad_lat = CORRIDOR_MI / 69.0  # ~69 mi/degree latitude
+        pad_lon = CORRIDOR_MI / (69.0 * max(0.2, math.cos(math.radians(sum(lats) / len(lats)))))
         min_lat, max_lat = min(lats) - pad_lat, max(lats) + pad_lat
         min_lon, max_lon = min(lons) - pad_lon, max(lons) + pad_lon
         box = '%.4f,%.4f,%.4f,%.4f' % (min_lon, min_lat, max_lon, max_lat)
         try:
-            tfrs = get_tfrs_in_box(min_lon, min_lat, max_lon, max_lat)
-        except Exception as e:
+            tfrs = get_tfrs_near_route(corridor_line, CORRIDOR_MI)
+        except Exception:
             tfrs = []
     fl['box'] = box
+    fl['route_line'] = [[p[0], p[1]] for p in route_line]
+    fl['corridor_route'] = [[p[0], p[1]] for p in corridor_line]
+    fl['corridor_mi'] = CORRIDOR_MI
     fl['tfrs'] = tfrs
     return fl
 

@@ -1398,7 +1398,62 @@ const MISSIONS = [
        ring:[[45.44167,-113.40833],[45.44167,-113.01667],[45.70833,-112.85833],[45.725,-113.225],[45.58333,-113.39167]]}
     ],
     box:"-117.0,44.5,-112.3,46.3",
-    tfrNote:"Real FAA TFR pulled server-side by Claude 2026-08-05 (tfr.faa.gov/geoserver WFS layer TFR:V_TFR_LOC + tfrapi/getWebText, same confirmed-working method as the 8/4 mission). Surface to 13,000 ft MSL, active 1415-0400 UTC daily through 2026-08-19, reason 'TO PROVIDE A SAFE ENVIRONMENT FOR FIRE FIGHTING ACFT OPS'. Checked the full current statewide MT TFR list (8 total): the other seven (Kalispell x2, Missoula x2, Hamilton, Helena x2) are all well outside this mission's box and unrelated to this flight, confirmed via their own coordinates, not assumed." }
+    tfrNote:"Real FAA TFR pulled server-side by Claude 2026-08-05 (tfr.faa.gov/geoserver WFS layer TFR:V_TFR_LOC + tfrapi/getWebText, same confirmed-working method as the 8/4 mission). Surface to 13,000 ft MSL, active 1415-0400 UTC daily through 2026-08-19, reason 'TO PROVIDE A SAFE ENVIRONMENT FOR FIRE FIGHTING ACFT OPS'. Checked the full current statewide MT TFR list (8 total): the other seven (Kalispell x2, Missoula x2, Hamilton, Helena x2) are all well outside this mission's box and unrelated to this flight, confirmed via their own coordinates, not assumed." },
+  { id:"nasa520_0805b", label:"N520NA · NASA520 (8/5, 2nd flight)", snapshotUtc:"2026-08-06T02:04Z", archived:true,
+    flight:{
+      callsign:"NASA520", hex:"a68a1b", reg:"N520NA", type:"Gulfstream III (GLF3)",
+      operator:"NASA Langley Research Center", payload:"",
+      dep:"KBOI", arr:"KBOI", offBlockLocal:"12:36:01 PM MDT (actual_off, via AeroAPI)", etaLocal:"LANDED 01:59:29 PM MDT (actual_on, via AeroAPI)",
+      note:"A second same-day mission to the same target, same filed route as the morning flight: BARNR DLN295035/D0+30 BOI, filed 375 kts, 28,000 ft (AeroAPI reports filed_altitude as 280 = hundreds of ft). This one was missed live -- Claude was heads-down helping set up AeroAPI access and had no monitor running, so it departed, flew the full mission, and landed without being noticed in real time. Backfilled entirely after the fact using the newly-working FlightAware AeroAPI (flights/{ident} for the summary + filed route, flights/{id}/track for the full real position history) -- first real use of AeroAPI in this project, and it immediately proved its worth by recovering a flight that would otherwise have been a total gap in the record.",
+      pattern:"Real recorded track: 194 points from AeroAPI's flights/{id}/track endpoint, full door-to-door coverage (18:36:01Z takeoff to 19:58:57Z, ~1h23m). Same racetrack/survey pattern over the Sand Creek / Bobcat Lakes area as the first flight, same TFR (6/1528) applies. Targets not re-confirmed separately for this flight but assumed identical to the morning mission given the identical filed route -- flag to Alex if that assumption needs checking."
+    },
+    filed:[
+      {lat:43.5644,lon:-116.2229,n:"KBOI departure"},
+      {lat:45.2554,lon:-112.5525,n:"DLN VORTAC (direct-to, real coords)"},
+      {lat:45.606,lon:-113.2125,n:"DLN R-295/35 hold (D0+30, approx.)"},
+      {lat:43.5644,lon:-116.2229,n:"Return to KBOI"}
+    ],
+    actual:[
+      [1785954961,43.55814,-116.20808,3100],[1785954975,43.55269,-116.19166,3500],[1785954991,43.54561,-116.16917,4100],[1785955007,43.53859,-116.14746,4600],[1785955032,43.52709,-116.11195,5400],[1785955062,43.51437,-116.0643,6400],
+      [1785955080,43.50819,-116.03603,7100],[1785955097,43.51079,-116.00739,7700],[1785955119,43.531,-115.97658,8500],[1785955137,43.545,-115.94837,9200],[1785955153,43.55884,-115.92839,9800],[1785955171,43.57993,-115.90723,10400],
+      [1785955206,43.61829,-115.85894,11700],[1785955227,43.6436,-115.83384,12400],[1785955244,43.66704,-115.81781,13000],[1785955274,43.70841,-115.78203,13800],[1785955304,43.75049,-115.74489,14300],[1785955334,43.79625,-115.70435,14900],
+      [1785955364,43.84062,-115.66489,15900],[1785955394,43.88573,-115.62469,16900],[1785955424,43.93312,-115.58245,17900],[1785955452,43.97621,-115.54347,18600],[1785955484,44.02249,-115.48905,19500],[1785955514,44.06221,-115.43413,20400],
+      [1785955544,44.10324,-115.37752,21600],[1785955574,44.14321,-115.32218,22700],[1785955605,44.18697,-115.26146,23900],[1785955635,44.22784,-115.20465,25200],[1785955665,44.26652,-115.15065,26500],[1785955695,44.30572,-115.09592,27700],
+      [1785955728,44.35112,-115.03209,28000],[1785955758,44.39122,-114.97598,28000],[1785955791,44.43672,-114.91224,28000],[1785955821,44.47778,-114.85442,28000],[1785955851,44.51793,-114.79771,28000],[1785955882,44.55738,-114.74228,28000],
+      [1785955912,44.59658,-114.68621,28000],[1785955943,44.63461,-114.61875,28000],[1785955973,44.66827,-114.55619,28000],[1785956003,44.70248,-114.49261,28000],[1785956033,44.73619,-114.42987,28000],[1785956064,44.76975,-114.36774,28000],
+      [1785956095,44.80307,-114.3062,28000],[1785956125,44.83814,-114.24167,28000],[1785956155,44.87189,-114.17957,28000],[1785956192,44.91313,-114.1038,28000],[1785956222,44.94653,-114.04234,28000],[1785956252,44.97963,-113.981,28000],
+      [1785956283,45.01364,-113.91769,28000],[1785956313,45.04857,-113.85263,28000],[1785956343,45.08198,-113.78996,28000],[1785956373,45.11578,-113.72618,28000],[1785956403,45.1496,-113.66226,28000],[1785956435,45.18658,-113.592,28000],
+      [1785956465,45.22087,-113.52585,28000],[1785956500,45.25878,-113.45226,28000],[1785956530,45.29205,-113.38721,28000],[1785956560,45.32698,-113.31933,28000],[1785956593,45.36443,-113.24668,28000],[1785956623,45.39885,-113.17952,28000],
+      [1785956653,45.43286,-113.11308,28000],[1785956671,45.452,-113.07848,28000],[1785956712,45.51077,-113.00315,28000],[1785956732,45.54272,-112.97719,28000],[1785956752,45.57605,-112.95848,28000],[1785956772,45.61021,-112.94975,28000],
+      [1785956794,45.64545,-112.95566,28000],[1785956813,45.67351,-112.97362,28000],[1785956835,45.70024,-113.00906,28000],[1785956853,45.7131,-113.04195,28000],[1785956877,45.72147,-113.09621,28000],[1785956897,45.71896,-113.14357,28000],
+      [1785956943,45.69214,-113.2456,28000],[1785956962,45.67438,-113.28606,28000],[1785957006,45.61742,-113.35281,28000],[1785957030,45.58065,-113.3901,28000],[1785957051,45.54364,-113.40249,28000],[1785957073,45.5034,-113.38898,28000],
+      [1785957089,45.47717,-113.35968,28000],[1785957106,45.46019,-113.31685,28000],[1785957125,45.45685,-113.26061,28000],[1785957147,45.46967,-113.20306,28000],[1785957165,45.48605,-113.15996,28000],[1785957183,45.50798,-113.12557,28000],
+      [1785957200,45.53577,-113.09987,28000],[1785957220,45.57047,-113.08676,28000],[1785957240,45.59983,-113.09663,28000],[1785957260,45.62238,-113.12763,28000],[1785957285,45.63791,-113.17738,28000],[1785957303,45.64005,-113.21927,28000],
+      [1785957327,45.63069,-113.2698,28000],[1785957345,45.61272,-113.30857,28000],[1785957375,45.57813,-113.36174,28000],[1785957393,45.55313,-113.38804,28000],[1785957412,45.51796,-113.39591,28000],[1785957429,45.48537,-113.38152,28000],
+      [1785957448,45.45649,-113.34347,28000],[1785957466,45.44339,-113.29801,28000],[1785957483,45.44192,-113.25216,28000],[1785957500,45.45122,-113.20463,28000],[1785957537,45.48507,-113.11564,28000],[1785957559,45.50919,-113.06466,28000],
+      [1785957582,45.53947,-113.02532,28000],[1785957598,45.56621,-113.0051,28000],[1785957614,45.59387,-112.99624,28000],[1785957636,45.62755,-113.0039,28000],[1785957658,45.65689,-113.03277,28000],[1785957677,45.6724,-113.07053,28000],
+      [1785957697,45.67952,-113.11324,28000],[1785957718,45.67296,-113.15877,28000],[1785957735,45.65117,-113.19053,28000],[1785957752,45.62132,-113.20386,28000],[1785957773,45.58204,-113.20518,28000],[1785957790,45.55118,-113.21892,28000],
+      [1785957827,45.5083,-113.28097,28000],[1785957859,45.47064,-113.33932,28000],[1785957889,45.43707,-113.39238,28000],[1785957919,45.40249,-113.4467,28000],[1785957950,45.36599,-113.50357,28000],[1785957981,45.33006,-113.55944,28000],
+      [1785958014,45.29118,-113.61976,28000],[1785958046,45.25259,-113.67953,28000],[1785958077,45.21643,-113.73544,28000],[1785958107,45.18036,-113.79102,28000],[1785958138,45.14392,-113.84713,28000],[1785958168,45.10794,-113.90233,28000],
+      [1785958198,45.0723,-113.9571,28000],[1785958228,45.03729,-114.01062,28000],[1785958259,45.00172,-114.06495,28000],[1785958290,44.96276,-114.1243,28000],[1785958321,44.9277,-114.17756,28000],[1785958355,44.88588,-114.24068,28000],
+      [1785958385,44.85001,-114.29533,28000],[1785958415,44.81447,-114.3491,28000],[1785958445,44.77812,-114.40404,28000],[1785958479,44.73834,-114.46394,28000],[1785958510,44.70241,-114.51789,28000],[1785958540,44.6662,-114.57217,28000],
+      [1785958570,44.63045,-114.62572,28000],[1785958600,44.59602,-114.67724,27700],[1785958630,44.55915,-114.73277,27000],[1785958660,44.52344,-114.78609,26400],[1785958691,44.48859,-114.83767,25700],[1785958721,44.45418,-114.88839,25100],
+      [1785958751,44.41837,-114.94119,24400],[1785958781,44.38206,-114.99468,23700],[1785958812,44.34641,-115.04667,23000],[1785958844,44.30581,-115.10664,22300],[1785958874,44.26969,-115.1601,21600],[1785958904,44.23105,-115.21644,20900],
+      [1785958934,44.19544,-115.26849,20200],[1785958964,44.15866,-115.32244,19600],[1785958995,44.12238,-115.37548,19000],[1785959026,44.08488,-115.43015,18500],[1785959056,44.0495,-115.48148,17900],[1785959086,44.01608,-115.52948,17400],
+      [1785959116,43.97997,-115.58167,17000],[1785959146,43.94517,-115.63182,17000],[1785959176,43.91075,-115.68176,16300],[1785959194,43.88695,-115.70941,15800],[1785959210,43.86231,-115.72148,15400],[1785959240,43.81557,-115.73691,14400],
+      [1785959270,43.76743,-115.75125,13400],[1785959300,43.72773,-115.76346,12900],[1785959330,43.68832,-115.77463,12100],[1785959360,43.65385,-115.78395,11300],[1785959390,43.6201,-115.79368,10400],[1785959411,43.59752,-115.801,9700],
+      [1785959441,43.56555,-115.81225,9100],[1785959471,43.53561,-115.82284,9000],[1785959487,43.52046,-115.82847,9000],[1785959506,43.49995,-115.83646,9000],[1785959522,43.48517,-115.84476,8800],[1785959538,43.47459,-115.86041,8400],
+      [1785959568,43.45573,-115.89593,7400],[1785959586,43.44855,-115.91596,7100],[1785959605,43.45209,-115.93977,6800],[1785959623,43.46054,-115.95629,6400],[1785959653,43.47551,-115.98463,6000],[1785959683,43.48805,-116.00943,5700],
+      [1785959705,43.49556,-116.02533,5600],[1785959726,43.50174,-116.04271,5400],[1785959749,43.50819,-116.06193,5100],[1785959779,43.51689,-116.08691,4700],[1785959809,43.52555,-116.11274,4400],[1785959825,43.53039,-116.12765,4200],
+      [1785959832,43.5325,-116.13334,4100],[1785959841,43.53472,-116.13974,4000],[1785959857,43.53956,-116.1538,3700],[1785959873,43.54436,-116.16771,3500],[1785959889,43.54907,-116.18157,3300],[1785959905,43.55399,-116.19585,3100],
+      [1785959921,43.55846,-116.2088,2900],[1785959937,43.56198,-116.21913,2800]
+    ],
+    tfrs:[
+      {id:"6/1528", name:"34NM SW BUTTE, MT — FIRE OPS (Sand Creek / Bobcat Lakes area)", up:13000, eff:"2026-08-04", exp:"2026-08-19",
+       ring:[[45.44167,-113.40833],[45.44167,-113.01667],[45.70833,-112.85833],[45.725,-113.225],[45.58333,-113.39167]]}
+    ],
+    box:"-117.0,44.5,-112.3,46.3",
+    tfrNote:"Same real TFR 6/1528 as the morning flight -- not re-pulled, reused since it's the same NOTAM and nothing about it changed between the two flights today." }
 ];
 </script>
 <script>
@@ -1714,44 +1769,90 @@ function renderMissionTabs(){
 function boxAround(lat,lon,padLat,padLon){
   return [lon-padLon, lat-padLat, lon+padLon, lat+padLat].map(n=>n.toFixed(4)).join(',');
 }
+/* Added 2026-08-05: typing a tail number here + TRACK now auto-builds a full mission
+   (filed plan + real TFRs + fires) via the local backend's /api/plan endpoint, not just
+   live position -- see serve.py's top-of-file comment for the full data flow and the known
+   limitation (route plotting is an approximation, not real fix-by-fix, since that needs
+   FAA NASR data this app doesn't have). Falls back to the original live-only behavior
+   below if AeroAPI has no record for the tail (e.g. non-NASA GA traffic with no filed IFR
+   plan) -- that path is unchanged from before this was added. No UI/HTML changed at all,
+   only this function's internals. */
 async function addMissionByTail(tailRaw){
   const tail = tailRaw.trim().toUpperCase();
   const msgEl = document.getElementById('addMissionMsg');
   msgEl.style.display = 'block';
   if(!tail){ msgEl.textContent = 'Enter a tail number.'; return; }
-  msgEl.textContent = 'Looking up '+tail+' via airplanes.live...';
-  let j;
+
+  msgEl.textContent = 'Looking up '+tail+' filed plan + TFRs...';
+  let plan = null;
   try{
-    j = await jgetAc('/reg/'+encodeURIComponent(tail));
-  }catch(e){
-    msgEl.textContent = tail+': ADS-B lookup failed ('+e.message+').';
+    const p = await jget('/api/plan?tail='+encodeURIComponent(tail));
+    if(!p.error) plan = p;
+  }catch(e){ /* local backend unavailable -- fall through to live-only path below */ }
+
+  msgEl.textContent = 'Looking up '+tail+' via airplanes.live...';
+  let ac = null;
+  try{
+    const j = await jgetAc('/reg/'+encodeURIComponent(tail));
+    ac = (j.ac||[])[0] || null;
+  }catch(e){ /* live position optional if we already have a filed plan */ }
+
+  if(!plan && !ac){
+    msgEl.textContent = tail+' is not currently broadcasting a live position and no filed plan was found (AeroAPI has no record, or the local backend is unreachable) -- can only add a flight once one of those is available.';
     return;
   }
-  const ac = (j.ac||[])[0];
-  if(!ac){
-    msgEl.textContent = tail+' is not currently broadcasting a live position -- can only add a flight while it\'s airborne (no historical backfill available client-side; ask Claude to pull its trace/TFRs server-side instead).';
-    return;
+
+  let flight, filedArr, box, tfrs, tfrNote, snapshotNote;
+  if(plan){
+    const o = plan.origin||{}, d = plan.destination||{};
+    filedArr = [];
+    if(o.latitude!=null) filedArr.push({lat:o.latitude, lon:o.longitude, n:(o.code_icao||o.code||'?')+' departure'});
+    (plan.route_points||[]).forEach(p=>filedArr.push({lat:p.lat, lon:p.lon, n:p.label}));
+    if(d.latitude!=null) filedArr.push({lat:d.latitude, lon:d.longitude, n:'Arrival '+(d.code_icao||d.code||'?')});
+    box = plan.box || (ac ? boxAround(ac.lat,ac.lon,0.8,1.2/Math.max(0.2,Math.cos(ac.lat*Math.PI/180))) : '-125,25,-66,49');
+    tfrs = (plan.tfrs||[]).map(t=>({id:t.id, name:t.name, up:null, eff:null, exp:null, ring:t.ring}));
+    tfrNote = 'Real FAA TFRs pulled server-side via local backend (tfr.faa.gov WFS layer TFR:V_TFR_LOC), auto-triggered by this tail lookup -- box widened using any VOR-radial/lat-lon tokens found in the filed route text, not just origin/destination (important for round trips where those are the same airport). Ceiling altitudes not available from this endpoint, shown as blank. Intermediate route points are an approximation (true-radial, no magnetic variation applied) -- NOT full fix-by-fix plotting, which would need FAA NASR navaid data this app does not have loaded.';
+    snapshotNote = new Date().toISOString().slice(0,16)+'Z (auto-built from AeroAPI filed plan'+(ac?' + live position':'')+')';
+    flight = {
+      callsign: plan.ident||tail, hex: ac?ac.hex:null, reg: plan.registration||tail,
+      type: plan.aircraft_type || (ac&&(ac.desc||ac.t)) || 'Unknown type', operator: (ac&&ac.ownOp) || 'Unknown operator',
+      payload: '', dep: o.code_icao||o.code||'—', arr: d.code_icao||d.code||'—',
+      offBlockLocal: plan.actual_off || plan.estimated_off || plan.scheduled_off || '—',
+      etaLocal: plan.actual_on ? ('Landed '+plan.actual_on) : (plan.scheduled_on || '—'),
+      note:'Filed route (AeroAPI, auto-fetched): '+(plan.route||'—')+'. Filed '+(plan.filed_airspeed_kts||'?')+' kts, '+(plan.filed_altitude_ft||'?')+' ft. Status: '+(plan.status||'unknown')+'. Auto-built by typing '+tail+' into the tracker -- no manual chat/paste involved.',
+      pattern: ac ? 'Live ADS-B position available -- track will record forward from here.' : 'Not currently airborne -- live track will pick up automatically once it departs, via the same poll used by every other mission.'
+    };
+  } else {
+    // no filed plan found -- fall back to the original live-only behavior, unchanged
+    const lat = ac.lat, lon = ac.lon;
+    const padLat = 0.8, padLon = 1.2 / Math.max(0.2, Math.cos(lat*Math.PI/180));
+    filedArr = [];
+    box = boxAround(lat,lon,padLat,padLon);
+    tfrs = [];
+    tfrNote = 'TFRs not fetched for this flight (no AeroAPI filed-plan record found, so the box couldn\'t be widened past the live position -- tfr.faa.gov also blocks cross-origin requests from the browser directly). Ask Claude to pull them if needed.';
+    snapshotNote = new Date().toISOString().slice(0,16)+'Z (live-added, no baked history)';
+    flight = {
+      callsign: (ac.flight||tail).trim(), hex: ac.hex||null, reg: ac.r||tail,
+      type: ac.desc || ac.t || 'Unknown type', operator: ac.ownOp || 'Unknown operator',
+      payload: '', dep:'—', arr:'—', offBlockLocal:'—', etaLocal:'—',
+      note:'Added by live tail lookup at '+new Date().toISOString().slice(11,16)+'Z. No filed route found via AeroAPI for this tail -- track records live from this point forward only.',
+      pattern:'TFRs not auto-fetched -- no filed-plan record to derive a search box from.'
+    };
   }
-  const lat = ac.lat, lon = ac.lon;
-  const padLat = 0.8, padLon = 1.2 / Math.max(0.2, Math.cos(lat*Math.PI/180));
-  const flight = {
-    callsign: (ac.flight||tail).trim(), hex: ac.hex||null, reg: ac.r||tail,
-    type: ac.desc || ac.t || 'Unknown type', operator: ac.ownOp || 'Unknown operator',
-    payload: '', dep:'—', arr:'—', offBlockLocal:'—', etaLocal:'—',
-    note:'Added by live tail lookup at '+new Date().toISOString().slice(11,16)+'Z. No filed route or historical track available client-side (FlightAware/globe.airplanes.live block cross-origin fetches) -- track records live from this point forward only.',
-    pattern:'TFRs not auto-fetched -- tfr.faa.gov has no CORS header, same limitation as this app\'s other missions. Ask Claude to pull real TFR/SUA data server-side if you need it baked in.'
-  };
+
   const newMission = {
-    id:'tail_'+tail, label:tail+(ac.flight?' · '+ac.flight.trim():''), archived:false,
-    snapshotUtc:new Date().toISOString().slice(0,16)+'Z (live-added, no baked history)',
-    flight, filed:[], actual:[], tfrs:[],
-    box:boxAround(lat,lon,padLat,padLon),
-    tfrNote:'TFRs not fetched for this flight (added live, client-side only -- tfr.faa.gov blocks cross-origin requests). Ask Claude to pull them if needed.'
+    id:'tail_'+tail, label:tail+(flight.callsign&&flight.callsign!==tail?' · '+flight.callsign:''), archived:false,
+    snapshotUtc:snapshotNote,
+    flight, filed:filedArr, actual:[], tfrs:tfrs,
+    box:box,
+    tfrNote:tfrNote
   };
   MISSIONS.push(newMission);
   renderMissionTabs();
   renderMission(MISSIONS.length-1);
-  msgEl.textContent = 'Tracking '+tail+' live. Recording flight path from now forward.';
+  msgEl.textContent = plan
+    ? ('Built '+tail+' from filed plan + '+tfrs.length+' TFR(s). '+(ac?'Live-tracking now.':'Will start tracking once airborne.'))
+    : ('Tracking '+tail+' live. Recording flight path from now forward.');
 }
 document.getElementById('addTailBtn').onclick = () => addMissionByTail(document.getElementById('addTailInput').value);
 document.getElementById('addTailInput').addEventListener('keydown', e => { if(e.key==='Enter') addMissionByTail(e.target.value); });

@@ -52,14 +52,34 @@ def http_get_json(url, headers=None):
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
+def pick_best_flight(flights):
+    """AeroAPI's flights/{ident} list is NOT reliably 'current flight first' -- for a
+    busy commercial tail it can return future-scheduled flights ahead of the one
+    actually airborne right now. Found 2026-08-06 debugging N285SY: index 0 was a
+    flight scheduled 3 days out while the real in-progress flight was buried at
+    index 11. Priority: currently airborne > soonest upcoming scheduled > most
+    recently arrived."""
+    en_route = [f for f in flights if (f.get('status') or '').startswith('En Route')]
+    if en_route:
+        en_route.sort(key=lambda f: f.get('actual_off') or '', reverse=True)
+        return en_route[0]
+    scheduled = [f for f in flights if (f.get('status') or '').startswith('Scheduled')]
+    if scheduled:
+        scheduled.sort(key=lambda f: f.get('scheduled_off') or '9999')
+        return scheduled[0]
+    arrived = [f for f in flights if f.get('actual_on')]
+    if arrived:
+        arrived.sort(key=lambda f: f.get('actual_on') or '', reverse=True)
+        return arrived[0]
+    return flights[0]
+
 def get_aeroapi_flight(tail):
     url = 'https://aeroapi.flightaware.com/aeroapi/flights/' + urllib.parse.quote(tail)
     data = http_get_json(url, headers={'x-apikey': AEROAPI_KEY})
     flights = data.get('flights', [])
     if not flights:
         return None
-    # prefer the most recent flight (list is newest-first from AeroAPI)
-    f = flights[0]
+    f = pick_best_flight(flights)
     return {
         'ident': f.get('ident'),
         'registration': f.get('registration'),

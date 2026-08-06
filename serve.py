@@ -64,14 +64,18 @@ def pick_best_flight(flights):
     if en_route:
         en_route.sort(key=lambda f: f.get('actual_off') or '', reverse=True)
         return en_route[0]
-    scheduled = [f for f in flights if (f.get('status') or '').startswith('Scheduled')]
-    if scheduled:
-        scheduled.sort(key=lambda f: f.get('scheduled_off') or '9999')
-        return scheduled[0]
+    # A flight that actually happened (has a real actual_on) is always more relevant
+    # than a hypothetical future scheduled one -- fixed 2026-08-06 after QXE2154 landed
+    # and the code jumped straight to a "Scheduled" flight for the NEXT DAY instead of
+    # showing the one that had just landed minutes earlier.
     arrived = [f for f in flights if f.get('actual_on')]
     if arrived:
         arrived.sort(key=lambda f: f.get('actual_on') or '', reverse=True)
         return arrived[0]
+    scheduled = [f for f in flights if (f.get('status') or '').startswith('Scheduled')]
+    if scheduled:
+        scheduled.sort(key=lambda f: f.get('scheduled_off') or '9999')
+        return scheduled[0]
     return flights[0]
 
 def get_aeroapi_flight(tail):

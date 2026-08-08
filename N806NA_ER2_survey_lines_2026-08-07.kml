@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2">
+<Document>
+  <name>N806NA ER-2 Fire Survey Lines - 2026-08-07</name>
+  <description>Planned 110 km E-W survey lines for NASA ER-2 (N806NA) departing Great Falls (KGTF). Each line is centered 25 km east of the fire (30 km west of fire / 80 km east of fire). Computed on WGS84 geodesic, headings 090/270 true.</description>
+
+  <Style id="fireIcon">
+    <IconStyle>
+      <color>ff0000ff</color>
+      <scale>1.2</scale>
+      <Icon><href>http://maps.google.com/mapfiles/kml/shapes/firedept.png</href></Icon>
+    </IconStyle>
+  </Style>
+  <Style id="lineStyle">
+    <LineStyle>
+      <color>ff00a5ff</color>
+      <width>4</width>
+    </LineStyle>
+  </Style>
+  <Style id="centerIcon">
+    <IconStyle>
+      <color>ff00a5ff</color>
+      <scale>0.8</scale>
+      <Icon><href>http://maps.google.com/mapfiles/kml/shapes/target.png</href></Icon>
+    </IconStyle>
+  </Style>
+
+  <Folder>
+    <name>Bobcat Fire Line</name>
+    <Placemark>
+      <name>Bobcat Fire</name>
+      <styleUrl>#fireIcon</styleUrl>
+      <Point><coordinates>-113.100555,45.635277,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Bobcat Line Center (25km E of fire)</name>
+      <styleUrl>#centerIcon</styleUrl>
+      <Point><coordinates>-112.779923,45.634827,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Bobcat Survey Line (110km, 090/270T, 30km W / 80km E of fire)</name>
+      <styleUrl>#lineStyle</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          -113.485293,45.632649,0
+          -112.074554,45.632649,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Folder>
+
+  <Folder>
+    <name>Widemouth 2 Line</name>
+    <Placemark>
+      <name>Widemouth 2 Fire</name>
+      <styleUrl>#fireIcon</styleUrl>
+      <Point><coordinates>-112.175903,38.972222,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Widemouth 2 Line Center (25km E of fire)</name>
+      <styleUrl>#centerIcon</styleUrl>
+      <Point><coordinates>-111.887421,38.971865,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Widemouth 2 Survey Line (110km, 090/270T, 30km W / 80km E of fire)</name>
+      <styleUrl>#lineStyle</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          -112.522070,38.970140,0
+          -111.252772,38.970140,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Folder>
+
+  <Folder>
+    <name>Black Canyon Line</name>
+    <Placemark>
+      <name>Black Canyon Fire</name>
+      <styleUrl>#fireIcon</styleUrl>
+      <Point><coordinates>-111.305237,39.387387,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Black Canyon Line Center (25km E of fire)</name>
+      <styleUrl>#centerIcon</styleUrl>
+      <Point><coordinates>-111.015053,39.387025,0</coordinates></Point>
+    </Placemark>
+    <Placemark>
+      <name>Black Canyon Survey Line (110km, 090/270T, 30km W / 80km E of fire)</name>
+      <styleUrl>#lineStyle</styleUrl>
+      <LineString>
+        <tessellate>1</tessellate>
+        <coordinates>
+          -111.653446,39.385274,0
+          -110.376661,39.385274,0
+        </coordinates>
+      </LineString>
+    </Placemark>
+  </Folder>
+
+</Document>
+</kml>

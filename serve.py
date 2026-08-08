@@ -6,6 +6,7 @@ import json
 import os
 import re
 import math
+import datetime
 
 # --- /api/plan?tail=XXXX ---------------------------------------------------
 # Added 2026-08-05 to power FireFlight.html's existing tail-number "TRACK" box
@@ -53,30 +54,115 @@ def http_get_json(url, headers=None):
     with urllib.request.urlopen(req, timeout=15) as resp:
         return json.loads(resp.read().decode('utf-8'))
 
+def _flight_recency_key(f):
+    """Best-effort 'how recent is this flight' sort key. AeroAPI's list endpoint
+    sometimes nulls out actual_on/actual_off for a 'Diverted' row (seen 2026-08-06,
+    N53W's KTRK leg -- Diverted with both fields None even though the same
+    fa_flight_id had a real actual_off when queried directly earlier that day), so
+    fall back to scheduled_off, then to the epoch timestamp FlightAware embeds in
+    fa_flight_id itself (e.g. 'N53W-1786031890-sw-4611p') which is always present."""
+    for field in ('actual_on', 'actual_off', 'scheduled_off'):
+        v = f.get(field)
+        if v:
+            return v
+    m = re.search(r'-(\d{9,11})-', f.get('fa_flight_id') or '')
+    if m:
+        return datetime.datetime.utcfromtimestamp(int(m.group(1))).isoformat()
+    return ''
+
+def _parse_iso(ts):
+    """Parse an AeroAPI timestamp ('...Z' or naive from _flight_recency_key's
+    fa_flight_id fallback) into a tz-aware UTC datetime, or None if unparseable."""
+    if not ts:
+        return None
+    try:
+        dt = datetime.datetime.fromisoformat(ts.replace('Z', '+00:00'))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=datetime.timezone.utc)
+        return dt
+    except ValueError:
+        return None
+
 def pick_best_flight(flights):
     """AeroAPI's flights/{ident} list is NOT reliably 'current flight first' -- for a
     busy commercial tail it can return future-scheduled flights ahead of the one
     actually airborne right now. Found 2026-08-06 debugging N285SY: index 0 was a
     flight scheduled 3 days out while the real in-progress flight was buried at
-    index 11. Priority: currently airborne > soonest upcoming scheduled > most
-    recently arrived."""
+    index 11. Priority: currently airborne > most recently resolved (arrived OR
+    diverted) > soonest upcoming scheduled."""
     en_route = [f for f in flights if (f.get('status') or '').startswith('En Route')]
     if en_route:
         en_route.sort(key=lambda f: f.get('actual_off') or '', reverse=True)
         return en_route[0]
-    # A flight that actually happened (has a real actual_on) is always more relevant
-    # than a hypothetical future scheduled one -- fixed 2026-08-06 after QXE2154 landed
-    # and the code jumped straight to a "Scheduled" flight for the NEXT DAY instead of
-    # showing the one that had just landed minutes earlier.
-    arrived = [f for f in flights if f.get('actual_on')]
-    if arrived:
-        arrived.sort(key=lambda f: f.get('actual_on') or '', reverse=True)
-        return arrived[0]
+    # A flight that actually happened -- landed at the filed destination OR diverted
+    # elsewhere -- is usually more relevant than a hypothetical future scheduled one.
+    # Fixed 2026-08-06 after QXE2154 landed and the code jumped straight to a
+    # 'Scheduled' flight for the NEXT DAY instead of showing the one that had just
+    # landed minutes earlier. Extended same day after N53W diverted off its filed
+    # KTRK route (near Boise) -- 'Diverted' wasn't in this bucket at all, so the app
+    # fell through to an unrelated 'Arrived' flight from two days prior instead.
+    resolved = [f for f in flights if f.get('actual_on') or (f.get('status') or '').startswith('Diverted')]
+    resolved_best = None
+    if resolved:
+        resolved.sort(key=_flight_recency_key, reverse=True)
+        resolved_best = resolved[0]
     scheduled = [f for f in flights if (f.get('status') or '').startswith('Scheduled')]
+    scheduled_best = None
     if scheduled:
         scheduled.sort(key=lambda f: f.get('scheduled_off') or '9999')
-        return scheduled[0]
+        scheduled_best = scheduled[0]
+    # 'Resolved always wins' breaks down when the resolved flight is stale -- found
+    # 2026-08-07 tracking N529NA/N520NA ahead of a NASA multi-aircraft mission: each
+    # had an 'Arrived' flight from the day before outranking TODAY's 'Scheduled'
+    # flight departing within the hour. Fix: when both a resolved and a scheduled
+    # candidate exist, pick whichever one's timestamp is closer to right now --
+    # a flight landing/diverting minutes ago still wins over a same-day scheduled
+    # flight hours out (preserves the original QXE2154 fix), but an imminent
+    # scheduled departure now correctly wins over a day-old arrival.
+    if resolved_best and scheduled_best:
+        now = datetime.datetime.now(datetime.timezone.utc)
+        r_time = _parse_iso(_flight_recency_key(resolved_best))
+        s_time = _parse_iso(scheduled_best.get('scheduled_off'))
+        if r_time is not None and s_time is not None:
+            r_dist = abs((now - r_time).total_seconds())
+            s_dist = abs((now - s_time).total_seconds())
+            return scheduled_best if s_dist < r_dist else resolved_best
+        return resolved_best
+    if resolved_best:
+        return resolved_best
+    if scheduled_best:
+        return scheduled_best
     return flights[0]
+
+def _borrow_route_if_missing(chosen, flights):
+    """AeroAPI sometimes splits one real takeoff into two records -- the originally
+    filed flight (with the real route) gets marked 'Arrived'/closed early, while a
+    separate route-less 'adhoc' record picks up the live En Route tracking. Found
+    2026-08-07 on N806NA's actual ER-2 departure: the adhoc En Route record (the one
+    pick_best_flight correctly prefers for live status) had route=None, which broke
+    corridor fires/TFR filtering downstream. If the chosen flight has no route, borrow
+    one from whichever OTHER flight in the list departed closest in time to it and
+    does have route text -- same physical flight, just a data-linking quirk on
+    AeroAPI's side, not a different mission."""
+    if chosen.get('route'):
+        return chosen
+    chosen_off = _parse_iso(chosen.get('actual_off') or chosen.get('scheduled_off'))
+    if chosen_off is None:
+        return chosen
+    candidates = [f for f in flights if f is not chosen and f.get('route')]
+    if not candidates:
+        return chosen
+    def _dist(f):
+        t = _parse_iso(f.get('actual_off') or f.get('scheduled_off'))
+        return abs((chosen_off - t).total_seconds()) if t else float('inf')
+    donor = min(candidates, key=_dist)
+    if _dist(donor) > 3600:
+        return chosen
+    merged = dict(chosen)
+    for field in ('route', 'filed_altitude', 'filed_airspeed', 'filed_ete'):
+        if not merged.get(field):
+            merged[field] = donor.get(field)
+    return merged
 
 def get_aeroapi_flight(tail):
     url = 'https://aeroapi.flightaware.com/aeroapi/flights/' + urllib.parse.quote(tail)
@@ -85,6 +171,7 @@ def get_aeroapi_flight(tail):
     if not flights:
         return None
     f = pick_best_flight(flights)
+    f = _borrow_route_if_missing(f, flights)
     return {
         'ident': f.get('ident'),
         'registration': f.get('registration'),
@@ -104,11 +191,50 @@ def get_aeroapi_flight(tail):
         'fa_flight_id': f.get('fa_flight_id'),
     }
 
+def _perp_dist(pt, a, b):
+    """Perpendicular distance from pt to the line a-b, in the same lat/lon-ish
+    units as the inputs (lon scaled by cos(lat) so it's roughly isotropic)."""
+    mlat = math.cos(math.radians(a[1])) or 1e-9
+    ax, ay = 0.0, 0.0
+    bx, by = (b[2] - a[2]) * mlat, (b[1] - a[1])
+    px, py = (pt[2] - a[2]) * mlat, (pt[1] - a[1])
+    seg_len2 = bx * bx + by * by
+    if seg_len2 == 0:
+        return math.hypot(px - ax, py - ay)
+    t = max(0.0, min(1.0, (px * bx + py * by) / seg_len2))
+    projx, projy = ax + t * bx, ay + t * by
+    return math.hypot(px - projx, py - projy)
+
+def _douglas_peucker(pts, epsilon):
+    """Classic recursive line simplification: keeps points where the path
+    actually curves, drops points that lie close to a straight line between
+    their neighbors. Unlike uniform-stride decimation, this preserves detail
+    through turns and thins hard on straight legs -- fixes the 'sometimes
+    blocky, sometimes smooth' look reported 2026-08-07, which turned out to be
+    the OLD stride-based thinning discarding points blind to curvature (worst
+    exactly during the heavy maneuvering seen near Black Canyon/Widemouth 2)."""
+    if len(pts) < 3:
+        return pts
+    a, b = pts[0], pts[-1]
+    max_dist, max_idx = 0.0, 0
+    for i in range(1, len(pts) - 1):
+        d = _perp_dist(pts[i], a, b)
+        if d > max_dist:
+            max_dist, max_idx = d, i
+    if max_dist > epsilon:
+        left = _douglas_peucker(pts[:max_idx + 1], epsilon)
+        right = _douglas_peucker(pts[max_idx:], epsilon)
+        return left[:-1] + right
+    return [a, b]
+
 def get_aeroapi_track(fa_flight_id):
     """Full real position history for a flight (in-progress or completed) via
     AeroAPI's own track endpoint -- same one used to backfill N520NA's missed
-    8/5 flight earlier tonight. Downsampled to ~300 points to keep the mission
-    payload reasonable."""
+    8/5 flight earlier tonight. Simplified with Douglas-Peucker (epsilon tuned
+    in degrees, ~0.003 =~ 200m) rather than blind uniform-stride thinning, so
+    turns stay smooth-looking regardless of total point count while straight
+    legs get thinned hard. Capped at MAX_TRACK_PTS as a payload-size backstop
+    (tightening epsilon if still over) -- normally never hit."""
     import datetime
     if not fa_flight_id:
         return []
@@ -124,22 +250,35 @@ def get_aeroapi_track(fa_flight_id):
             epoch = int(datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
                         .replace(tzinfo=datetime.timezone.utc).timestamp())
             pts.append([epoch, p.get('latitude'), p.get('longitude'), round((p.get('altitude') or 0) * 100)])
-        target = 300
-        if len(pts) > target:
-            step = max(1, len(pts) // target)
-            pts = [p for i, p in enumerate(pts) if i % step == 0 or i == len(pts) - 1]
-        return pts
+        MAX_TRACK_PTS = 600
+        epsilon = 0.003
+        simplified = _douglas_peucker(pts, epsilon)
+        while len(simplified) > MAX_TRACK_PTS and epsilon < 0.5:
+            epsilon *= 2
+            simplified = _douglas_peucker(pts, epsilon)
+        return simplified
     except Exception:
         return []
 
+_AIRPORT_COORDS_CACHE = {}
+
 def get_airport_coords(icao):
+    """Airport coordinates never change, so cache them permanently in-memory --
+    every /api/plan request was re-fetching origin AND destination airport coords
+    fresh every time (2 of the 4 AeroAPI calls per request), which was a real
+    contributor to the 429s hit repeatedly 2026-08-07 tracking 3 simultaneous
+    NASA aircraft on a 5-min poll. Restart the server to clear (rare enough not
+    to matter -- airports aren't moving)."""
     if not icao:
         return None
+    if icao in _AIRPORT_COORDS_CACHE:
+        return _AIRPORT_COORDS_CACHE[icao]
     try:
         url = 'https://aeroapi.flightaware.com/aeroapi/airports/' + urllib.parse.quote(icao)
         data = http_get_json(url, headers={'x-apikey': AEROAPI_KEY})
         lat, lon = data.get('latitude'), data.get('longitude')
         if lat is not None and lon is not None:
+            _AIRPORT_COORDS_CACHE[icao] = (lat, lon)
             return (lat, lon)
     except Exception:
         pass
@@ -205,11 +344,28 @@ def point_to_segment_mi(plat, plon, alat, alon, blat, blon):
     return haversine_mi(plat, plon, clat, clon)
 
 def dist_to_route_mi(lat, lon, route):
-    """Min distance in miles from a point to any segment of the route polyline."""
-    if len(route) < 2:
-        return haversine_mi(lat, lon, route[0][0], route[0][1]) if route else float('inf')
-    return min(point_to_segment_mi(lat, lon, a[0], a[1], b[0], b[1])
-               for a, b in zip(route, route[1:]))
+    """Min distance in miles from a point to any segment of the route polyline(s).
+    A (None, None) entry marks a break between independently-plotted line segments
+    (e.g. filed route vs actual flown track) -- a segment must never bridge across
+    a break. Concatenating two unrelated polylines end-to-end used to silently
+    create a fake long diagonal 'flown' segment connecting the filed destination
+    straight to wherever the actual track happened to start. Found 2026-08-08 on
+    N520NA's KPVU->KBOI leg: that fake segment ran straight across Idaho/Oregon,
+    sweeping in fires 80-100mi from Boise that had nothing to do with where the
+    plane actually went or currently is."""
+    valid_pts = [p for p in route if p[0] is not None]
+    if not valid_pts:
+        return float('inf')
+    best = float('inf')
+    for a, b in zip(route, route[1:]):
+        if a[0] is None or b[0] is None:
+            continue
+        d = point_to_segment_mi(lat, lon, a[0], a[1], b[0], b[1])
+        if d < best:
+            best = d
+    if best == float('inf'):
+        best = min(haversine_mi(lat, lon, p[0], p[1]) for p in valid_pts)
+    return best
 
 def get_tfrs_near_route(route, corridor_mi):
     url = ('https://tfr.faa.gov/geoserver/TFR/ows?service=WFS&version=1.1.0&request=GetFeature'
@@ -276,7 +432,11 @@ def build_mission_plan(tail):
     if len(actual_pts) > 60:
         step = max(1, len(actual_pts) // 60)
         actual_pts = actual_pts[::step]
-    corridor_line = route_line + actual_pts
+    # (None, None) is a break marker, not a real point -- keeps dist_to_route_mi
+    # from bridging a fake segment between the filed route and the actual track
+    # (they're independent polylines, not one continuous flown path).
+    BREAK = (None, None)
+    corridor_line = route_line + ([BREAK] if route_line and actual_pts else []) + actual_pts
     if not corridor_line and (o_coords or d_coords):
         corridor_line = [c for c in [o_coords, d_coords] if c]
 
@@ -284,8 +444,8 @@ def build_mission_plan(tail):
     tfrs = []
     box = None
     if corridor_line:
-        lats = [p[0] for p in corridor_line]
-        lons = [p[1] for p in corridor_line]
+        lats = [p[0] for p in corridor_line if p[0] is not None]
+        lons = [p[1] for p in corridor_line if p[1] is not None]
         pad_lat = CORRIDOR_MI / 69.0  # ~69 mi/degree latitude
         pad_lon = CORRIDOR_MI / (69.0 * max(0.2, math.cos(math.radians(sum(lats) / len(lats)))))
         min_lat, max_lat = min(lats) - pad_lat, max(lats) + pad_lat

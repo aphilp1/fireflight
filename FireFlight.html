@@ -1503,8 +1503,17 @@ try{
 function saveTailMissionsToStorage(){
   try{
     const tailMissions = MISSIONS.filter(m=>m.id.startsWith('tail_'));
-    localStorage.setItem(TAIL_STORAGE_KEY, JSON.stringify(tailMissions));
-  }catch(e){ /* storage full/unavailable -- non-fatal, mission still works this session */ }
+    // renderMission() attaches live Leaflet layer objects directly onto mission data
+    // (e.g. t._poly=poly on each TFR, line ~1783) so it can look them up again on
+    // click. Those layers hold circular refs (layer._popup._source===layer), which
+    // silently breaks JSON.stringify for the ENTIRE array the moment ANY mission has
+    // been rendered once -- found 2026-08-07 when N520NA/N529NA rebuilds kept
+    // vanishing after N806NA's render ran first. Strip anything underscore-prefixed
+    // (this codebase's own convention for transient/rendering-only fields) before
+    // serializing.
+    const json = JSON.stringify(tailMissions, (key, value) => key.startsWith('_') ? undefined : value);
+    localStorage.setItem(TAIL_STORAGE_KEY, json);
+  }catch(e){ console.error('saveTailMissionsToStorage failed:', e); }
 }
 
 /* 2026-08-06, per Alex: fires and TFRs must be filtered to within 100mi of the
@@ -1529,12 +1538,28 @@ function pointToSegmentMi(plat,plon,alat,alon,blat,blon){
   return haversineMi(plat,plon,alat+cy,alon+cx/mlat);
 }
 function distToRouteMi(lat,lon,route){
+  // A [null,null] entry marks a break between independently-plotted polylines
+  // (filed route vs actual flown track) -- must never bridge a fake segment
+  // across it. Mirrors the same fix in serve.py's dist_to_route_mi, found
+  // 2026-08-08 on N520NA: the old code treated filed-route+actual-track as one
+  // continuous line, so the segment connecting the filed destination straight to
+  // wherever the actual track started swept in fires 80-100mi away that had
+  // nothing to do with where the plane actually flew.
   if(!route||route.length===0) return Infinity;
-  if(route.length===1) return haversineMi(lat,lon,route[0][0],route[0][1]);
+  const validPts = route.filter(p=>p[0]!=null);
+  if(!validPts.length) return Infinity;
   let min=Infinity;
   for(let i=0;i<route.length-1;i++){
-    const d=pointToSegmentMi(lat,lon,route[i][0],route[i][1],route[i+1][0],route[i+1][1]);
+    const a=route[i], b=route[i+1];
+    if(a[0]==null||b[0]==null) continue;
+    const d=pointToSegmentMi(lat,lon,a[0],a[1],b[0],b[1]);
     if(d<min) min=d;
+  }
+  if(min===Infinity){
+    for(const p of validPts){
+      const d=haversineMi(lat,lon,p[0],p[1]);
+      if(d<min) min=d;
+    }
   }
   return min;
 }
@@ -1713,8 +1738,20 @@ function boundsFor(m){
   const [minLon,minLat,maxLon,maxLat] = m.box.split(',').map(Number);
   return L.latLngBounds([[minLat,minLon],[maxLat,maxLon]]);
 }
+const CONUS_BOUNDS=[[24.5,-125],[49.5,-66.5]];
+const OVERVIEW_MISSION={
+  id:'__overview__', label:'CONUS Overview', archived:true, snapshotUtc:'—',
+  flight:{callsign:'', type:'', reg:'', payload:'', dep:'—', arr:'—', offBlockLocal:'—', etaLocal:'—',
+    pattern:'No flight selected. Pick one from OTHER FLIGHTS above, or enter a tail number and hit TRACK.'},
+  filed:[], actual:[], tfrs:[], tfrNote:'', box:null, corridorRoute:null, corridorMi:null
+};
+// Alex asked 2026-08-08 for first load to show a blank CONUS view instead of
+// whatever old mission happened to be first/non-archived (was showing 8/5's
+// NASA520 flight by accident of array order). idx===-1 is the sentinel for
+// this synthetic overview -- it skips all the live fires/TFR/airspace fetches
+// and aircraft polling below, since there's no real mission/box to scope them to.
 async function renderMission(idx){
-  missionIdx=idx; mission=MISSIONS[idx];
+  missionIdx=idx; mission = idx===-1 ? OVERVIEW_MISSION : MISSIONS[idx];
   const m=mission;
   renderMissionTabs();
 
@@ -1795,6 +1832,18 @@ async function renderMission(idx){
   });
 
   drawProfile();
+
+  if(idx===-1){
+    // Overview mode: no real box/corridor to scope live fires/TFRs/airspace/aircraft
+    // polling to, so skip all of that and just show the national map, neutral.
+    map.fitBounds(CONUS_BOUNDS,{padding:[20,20]});
+    document.getElementById('fireList').innerHTML='<div style="color:var(--dim)">Select a flight to see fires along its corridor.</div>';
+    document.getElementById('airList').innerHTML='<div style="color:var(--dim)">Select a flight to see airspace along its corridor.</div>';
+    document.getElementById('foot').innerHTML='No flight selected.';
+    if(pollTimer) clearInterval(pollTimer);
+    return;
+  }
+
   map.fitBounds(boundsFor(m),{padding:[50,50]});
 
   const f=await loadFires(m.box,m.corridorRoute,m.corridorMi).catch(e=>{
@@ -1812,15 +1861,42 @@ async function renderMission(idx){
 }
 
 /* ---------------- add a flight by tail number ---------------- */
+function missionDateLabel(m){
+  // Alex asked 2026-08-08 for every mission row to show a real date/timestamp --
+  // previously the OTHER FLIGHTS list only showed "Active"/"Archived" with no date
+  // at all, so there was no way to tell WHEN a flight happened without clicking in.
+  // Tail-built missions carry a real ISO timestamp in flight.offBlockLocal (from
+  // AeroAPI); baked/curated missions only have a bare time string like "10:53 AM
+  // MDT" with no date, so fall back to snapshotUtc's leading date, then to whatever
+  // offBlockLocal has (better than nothing).
+  const ob = (m.flight && m.flight.offBlockLocal) || '';
+  if(/^\d{4}-\d{2}-\d{2}T/.test(ob)){
+    const d = new Date(ob);
+    if(!isNaN(d)) return d.toISOString().slice(0,16).replace('T',' ')+'Z';
+  }
+  if(m.snapshotUtc){
+    const d = m.snapshotUtc.match(/^\d{4}-\d{2}-\d{2}T?\d{0,2}:?\d{0,2}/);
+    if(d) return d[0].replace('T',' ');
+  }
+  return ob || '—';
+}
 function renderMissionTabs(){
   const cur = MISSIONS[missionIdx];
-  document.getElementById('pinnedTab').textContent = cur.label;
+  // Defensive: missionIdx can be transiently invalid (e.g. before any mission has
+  // been rendered yet). Previously this threw and left the OTHER FLIGHTS dropdown
+  // permanently unrendered for the rest of the session -- exactly what would look
+  // like "a flight went away" to a user, even though MISSIONS/localStorage were
+  // fine underneath. Skip the pinned-tab label update rather than crash; the
+  // dropdown list below is still rebuilt correctly either way.
+  if(missionIdx===-1) document.getElementById('pinnedTab').textContent = OVERVIEW_MISSION.label;
+  else if(cur) document.getElementById('pinnedTab').textContent = cur.label;
   const dd = document.getElementById('otherFlightsDropdown');
   const others = MISSIONS.map((m,i)=>({m,i}));
   dd.innerHTML = others.length ? others.map(o=>
     '<div class="ofRow" data-i="'+o.i+'" style="padding:9px 12px;border-bottom:1px solid var(--line);cursor:pointer">'+
       '<div style="font-weight:800;font-size:11.5px;color:var(--ink)">'+esc(o.m.label)+'</div>'+
       '<div style="font-size:10px;color:var(--dim);margin-top:2px">'+(o.m.archived?'Archived':'Active')+(o.i===missionIdx?' · current':'')+'</div>'+
+      '<div style="font-size:9.5px;color:var(--dim);margin-top:1px;opacity:.8">'+esc(missionDateLabel(o.m))+'</div>'+
     '</div>'
   ).join('') : '<div style="padding:12px;color:var(--dim);font-size:11px">No other flights yet -- track one above.</div>';
   document.querySelectorAll('#otherFlightsDropdown .ofRow').forEach(row=>row.onclick=()=>{
@@ -1920,10 +1996,18 @@ async function addMissionByTail(tailRaw){
     box:box, corridorRoute:corridorRoute||null, corridorMi:corridorMi||null,
     tfrNote:tfrNote
   };
-  MISSIONS.push(newMission);
+  // Re-tracking a tail that's already a mission (common -- rebuilding for a fresh
+  // position/status) must REPLACE the existing entry in place, not push a duplicate.
+  // Found 2026-08-07: pushing duplicates left two 'tail_N806NA' entries with the same
+  // id, which confused the OTHER FLIGHTS dropdown/render logic and made the mission
+  // appear to randomly vanish when switching flights.
+  const existingIdx = MISSIONS.findIndex(m => m.id === newMission.id);
+  const finalIdx = existingIdx === -1 ? MISSIONS.length : existingIdx;
+  if (existingIdx === -1) MISSIONS.push(newMission);
+  else MISSIONS[existingIdx] = newMission;
   saveTailMissionsToStorage();
   renderMissionTabs();
-  renderMission(MISSIONS.length-1);
+  renderMission(finalIdx);
   const statusTxt = plan && !ac
     ? ((plan.status||'').toLowerCase().includes('en route') ? 'En route per AeroAPI, no live ADS-B contact right now (coverage gap).'
        : plan.actual_on ? 'Landed.' : 'Not airborne yet.')
@@ -1951,6 +2035,12 @@ document.addEventListener('click', (e)=>{
 document.getElementById('archiveBtn').onclick = ()=>{
   if(mission.archived) return;
   mission.archived = true;
+  // Bug found 2026-08-08: this never persisted the archived flag for tail-built
+  // missions -- saveTailMissionsToStorage() writes MISSIONS to localStorage, but
+  // archiving only ever mutated the in-memory object, so a reload silently
+  // un-archived everything. saveTailMissionsToStorage() itself no-ops for baked
+  // (non-tail_) missions, so this is safe to call unconditionally here.
+  saveTailMissionsToStorage();
   const next = MISSIONS.findIndex(m=>!m.archived);
   renderMission(next!==-1 ? next : missionIdx);
 };
@@ -1962,8 +2052,9 @@ document.querySelectorAll('.tabs button[data-p]').forEach(b=>b.onclick=()=>{
 setInterval(()=>document.getElementById('clock').textContent=
   new Date().toUTCString().slice(17,22)+'Z',1000);
 
-renderMission(missionIdx);
+renderMission(-1);
 document.getElementById('zoomFlight').onclick=()=>{
+  if(missionIdx===-1){ map.fitBounds(CONUS_BOUNDS,{padding:[20,20]}); return; }
   map.fitBounds(boundsFor(mission),{padding:[50,50]});
   if(!map.hasLayer(gRoute)) gRoute.addTo(map);
 };

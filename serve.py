@@ -7,6 +7,8 @@ import os
 import re
 import math
 import datetime
+import shutil
+import threading
 
 # --- /api/plan?tail=XXXX ---------------------------------------------------
 # Added 2026-08-05 to power FireFlight.html's existing tail-number "TRACK" box
@@ -462,12 +464,90 @@ def build_mission_plan(tail):
     fl['tfrs'] = tfrs
     return fl
 
+
+# --- /api/missions ----------------------------------------------------------
+# Added 2026-10-08 per Alex: TRACK-built missions used to live ONLY in the
+# browser's localStorage (lost on a cleared cache, a different browser/profile,
+# or a different port). missions/tail_missions.json is now the source of truth.
+# The page fetches it statically at boot (so GitHub Pages can read it too) and
+# every TRACK build / ARCHIVE click POSTs the full tail-mission array back here.
+# Protection: every write first copies the previous file to missions/backups/
+# (gitignored via *backup*), writes atomically (temp file + os.replace), and a
+# payload that would DROP an id already in the file is refused with 409 -- the
+# UI has no delete, so a shrinking payload can only mean a stale/half-loaded
+# browser, and it must never be allowed to overwrite good data.
+MISSIONS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'missions')
+MISSIONS_FILE = os.path.join(MISSIONS_DIR, 'tail_missions.json')
+MISSIONS_BACKUP_DIR = os.path.join(MISSIONS_DIR, 'backups')
+MISSIONS_LOCK = threading.Lock()
+
+def read_missions_file():
+    if not os.path.exists(MISSIONS_FILE):
+        return []
+    with open(MISSIONS_FILE, encoding='utf-8') as f:
+        data = json.load(f)
+    return data if isinstance(data, list) else []
+
+def write_missions_file(missions):
+    if not isinstance(missions, list):
+        raise ValueError('missions payload must be a JSON array')
+    for m in missions:
+        if not isinstance(m, dict) or not str(m.get('id', '')).startswith('tail_'):
+            raise ValueError('every mission must be an object whose id starts with tail_')
+    os.makedirs(MISSIONS_BACKUP_DIR, exist_ok=True)
+    if os.path.exists(MISSIONS_FILE):
+        stamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        shutil.copy2(MISSIONS_FILE, os.path.join(MISSIONS_BACKUP_DIR, 'tail_missions_%s.json' % stamp))
+    tmp = MISSIONS_FILE + '.tmp'
+    with open(tmp, 'w', encoding='utf-8') as f:
+        json.dump(missions, f, indent=1, ensure_ascii=False)
+        f.write('\n')
+    os.replace(tmp, MISSIONS_FILE)
+    return len(missions)
+
 class QuietHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    def _send_json(self, code, obj):
+        body = json.dumps(obj).encode('utf-8')
+        self.send_response(code)
+        self.send_header('Content-Type', 'application/json')
+        self.send_header('Cache-Control', 'no-store')
+        self.send_header('Access-Control-Allow-Origin', '*')
+        self.send_header('Content-Length', str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path != '/api/missions':
+            self._send_json(404, {'error': 'not found'})
+            return
+        try:
+            n = int(self.headers.get('Content-Length') or 0)
+            payload = json.loads(self.rfile.read(n).decode('utf-8'))
+            with MISSIONS_LOCK:
+                current_ids = {m.get('id') for m in read_missions_file()}
+                new_ids = {m.get('id') for m in payload if isinstance(m, dict)} if isinstance(payload, list) else set()
+                dropped = sorted(i for i in current_ids - new_ids if i)
+                if dropped:
+                    code, result = 409, {'error': 'refusing to drop missions already in file', 'dropped': dropped}
+                else:
+                    code, result = 200, {'ok': True, 'count': write_missions_file(payload)}
+        except Exception as e:
+            code, result = 400, {'error': str(e)}
+        self._send_json(code, result)
+
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == '/api/missions':
+            try:
+                with MISSIONS_LOCK:
+                    self._send_json(200, read_missions_file())
+            except Exception as e:
+                self._send_json(500, {'error': str(e)})
+            return
         if parsed.path == '/api/plan':
             qs = urllib.parse.parse_qs(parsed.query)
             tail = (qs.get('tail') or [''])[0].strip().upper()

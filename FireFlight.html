@@ -1500,6 +1500,34 @@ try{
   const saved = JSON.parse(localStorage.getItem(TAIL_STORAGE_KEY) || '[]');
   saved.forEach(m=>{ if(!MISSIONS.some(x=>x.id===m.id)) MISSIONS.push(m); });
 }catch(e){ /* corrupted/old localStorage entry -- ignore, don't block boot */ }
+/* 2026-10-08, per Alex: the missions FILE is the source of truth and the browser
+   is only a cache. missions/tail_missions.json is fetched statically (works on
+   localhost AND on GitHub Pages via the relative path); writes go to serve.py's
+   POST /api/missions (localhost only -- on Pages the POST fails quietly and
+   localStorage behaves exactly as before). Merge rule: a mission from the file
+   replaces any same-id localStorage copy pushed above (file wins); ids present
+   only in localStorage are kept and written back so the file catches up.
+   Baked/curated missions in MISSIONS are never touched. Visual code untouched. */
+const TAIL_MISSIONS_FILE = 'missions/tail_missions.json';
+(async function loadTailMissionsFromFile(){
+  let fileMissions;
+  try{
+    const r = await fetch(TAIL_MISSIONS_FILE+'?t='+Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    fileMissions = await r.json();
+    if(!Array.isArray(fileMissions)) throw new Error('not an array');
+  }catch(e){ console.warn('tail missions file not loaded ('+e+'); using localStorage only'); return; }
+  const fileIds = new Set();
+  fileMissions.forEach(m=>{
+    if(!m || typeof m.id!=='string' || !m.id.startsWith('tail_')) return;
+    fileIds.add(m.id);
+    const i = MISSIONS.findIndex(x=>x.id===m.id);
+    if(i===-1) MISSIONS.push(m);
+    else MISSIONS[i] = m;
+  });
+  renderMissionTabs();
+  if(MISSIONS.some(m=>m.id.startsWith('tail_') && !fileIds.has(m.id))) saveTailMissionsToStorage();
+})();
 function saveTailMissionsToStorage(){
   try{
     const tailMissions = MISSIONS.filter(m=>m.id.startsWith('tail_'));
@@ -1513,6 +1541,11 @@ function saveTailMissionsToStorage(){
     // serializing.
     const json = JSON.stringify(tailMissions, (key, value) => key.startsWith('_') ? undefined : value);
     localStorage.setItem(TAIL_STORAGE_KEY, json);
+    // 2026-10-08: also persist to the project file through serve.py (localhost
+    // only; on GitHub Pages this request fails and is logged, nothing else changes).
+    fetch('/api/missions', {method:'POST', headers:{'content-type':'application/json'}, body: json})
+      .then(async r=>{ if(!r.ok) throw new Error('HTTP '+r.status+' '+(await r.text())); })
+      .catch(e=>console.warn('tail missions file write failed:', e));
   }catch(e){ console.error('saveTailMissionsToStorage failed:', e); }
 }
 
